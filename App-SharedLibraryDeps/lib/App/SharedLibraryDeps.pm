@@ -5,7 +5,9 @@ use strict;
 
 =head1 NAME
 
-App::SharedLibraryDeps - The great new App::SharedLibraryDeps!
+App::SharedLibraryDeps - Determine dependencies for binaries or libraries that
+are linked against shared libraries, and generate reports or lists of files
+based on the dependencies found.
 
 =head1 VERSION
 
@@ -27,12 +29,7 @@ Perhaps a little code snippet.
     my $foo = App::SharedLibraryDeps->new();
     ...
 
-=head1 EXPORT
-
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
-
-=head1 FUNCTIONS
+=head1 OBJECT METHODS
 
 =head2 function1
 
@@ -54,12 +51,10 @@ Brian Manning, C<< <xaoc at cpan.org> >>
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<bug-app-sharedlibrarydeps at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=App-SharedLibraryDeps>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
-
-
-
+Please report any bugs or feature requests to
+L<https://github.com/spicyjack/App-SharedLibraryDeps/issues>.  I will be
+notified, and then you'll automatically be notified of progress on your bug as
+I make changes.
 
 =head1 SUPPORT
 
@@ -67,32 +62,17 @@ You can find documentation for this module with the perldoc command.
 
     perldoc App::SharedLibraryDeps
 
-
 You can also look for information at:
 
 =over 4
 
-=item * RT: CPAN's request tracker
+=item * Project GitHub repo: acker
 
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=App-SharedLibraryDeps>
-
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/App-SharedLibraryDeps>
-
-=item * CPAN Ratings
-
-L<http://cpanratings.perl.org/d/App-SharedLibraryDeps>
-
-=item * Search CPAN
-
-L<http://search.cpan.org/dist/App-SharedLibraryDeps/>
+L<https://github.com/spicyjack/App-SharedLibraryDeps>
 
 =back
 
-
 =head1 ACKNOWLEDGEMENTS
-
 
 =head1 COPYRIGHT & LICENSE
 
@@ -100,7 +80,6 @@ Copyright 2013 Brian Manning, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
-
 
 =cut
 

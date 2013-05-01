@@ -5,7 +5,8 @@ use strict;
 
 =head1 NAME
 
-App::SharedLibraryDeps::File - The great new App::SharedLibraryDeps::File!
+App::SharedLibraryDeps::File - A file on the filesystem that may have
+dependencies, or other files may be dependent on it.
 
 =head1 VERSION
 
@@ -18,13 +19,10 @@ our $VERSION = '0.01';
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
-
+    my $filename = q(/path/to/a/binary/or/library);
     use App::SharedLibraryDeps::File;
-
-    my $foo = App::SharedLibraryDeps::File->new();
+    my $foo = App::SharedLibraryDeps::File->new(filename => $filename);
+    my @deps = $file->get_shared_library_dependencies();
     ...
 
 =head1 OBJECT METHODS

@@ -27,14 +27,13 @@ our $VERSION = '0.01';
  -h|--help          Shows this help text
 
  Other script options:
- -c|--catalog       Catalog spreadsheet file
- -d|--dumpdir       Dump file objects to this directory (Create if needed)
+ -f|--file          Discover dependencies for these files
  -o|--output        Output dependencies as a filelist (for 'gen_init_cpio')
 
  Example usage:
 
  # list the structure of an XLS file
- shared_lib_deps.pl --catalog /path/to/UralCatalog.xls \
+ shared_lib_deps.pl --file /path/to/file1 --file=/path/to/file2
 
 You can view the full C<POD> documentation of this file by calling C<perldoc
 shared_lib_deps.pl>.
@@ -46,13 +45,8 @@ our @options = (
     q(verbose|v+),
     q(help|h),
     # other options
-    q(catalog|c=s),
-    q(dumpdir|dir|dump|d=s),
-    q(show-empty|empty),
-    q(show-tables|tables),
-    q(show-groups|groups),
-    q(show-diagrams|diagrams),
-    q(show-all|all),
+    q(files|f=s@),
+    q(output|o=s),
 );
 
 =head1 DESCRIPTION
@@ -62,7 +56,7 @@ L<Log::Log4perl> logging module.
 
 =head1 OBJECTS
 
-=head2 Template::Config
+=head2 SharedLibDeps::Config
 
 An object used for storing configuration data.
 
@@ -71,9 +65,9 @@ An object used for storing configuration data.
 =cut
 
 #############################
-# Template::Config #
+# SharedLibDeps::Config #
 #############################
-package Template::Config;
+package SharedLibDeps::Config;
 use strict;
 use warnings;
 use Getopt::Long;
@@ -85,7 +79,7 @@ use POSIX qw(strftime);
 
 =item new( )
 
-Creates the L<Template::Config> object, and parses out options using
+Creates the L<SharedLibDeps::Config> object, and parses out options using
 L<Getopt::Long>.
 
 =cut
@@ -117,7 +111,7 @@ sub new {
 =item get($key)
 
 Returns the scalar value of the key passed in as C<key>, or C<undef> if the
-key does not exist in the L<Template::Config> object.
+key does not exist in the L<SharedLibDeps::Config> object.
 
 =cut
 
@@ -133,9 +127,9 @@ sub get {
 
 =item set( key => $value )
 
-Sets in the L<Template::Config> object the key/value pair passed in as
+Sets in the L<SharedLibDeps::Config> object the key/value pair passed in as
 arguments.  Returns the old value if the key already existed in the
-L<Template::Config> object, or C<undef> otherwise.
+L<SharedLibDeps::Config> object, or C<undef> otherwise.
 
 =cut
 
@@ -191,7 +185,7 @@ my %pps_type = (
     binmode(STDOUT, ":utf8");
     #my $catalog_file = q(/srv/www/purl/html/Ural_Catalog/UralCatalog.xls);
     # create a logger object
-    my $config = Template::Config->new();
+    my $config = SharedLibDeps::Config->new();
 
     # set up the logger
     #my $log_conf = qq(log4perl.rootLogger = WARN, Screen\n);

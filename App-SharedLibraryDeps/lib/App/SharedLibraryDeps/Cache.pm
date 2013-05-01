@@ -1,12 +1,12 @@
-package App::SharedLibraryDeps::File;
+package App::SharedLibraryDeps::Cache;
 
 use warnings;
 use strict;
 
 =head1 NAME
 
-App::SharedLibraryDeps::File - A file on the filesystem that may have
-dependencies, or other files may be dependent on it.
+App::SharedLibraryDeps::Cache - A cache of L<App::SharedLibraryDeps::File>
+objects.
 
 =head1 VERSION
 
@@ -20,9 +20,11 @@ our $VERSION = '0.01';
 =head1 SYNOPSIS
 
     my $filename = q(/path/to/a/binary/or/library);
-    use App::SharedLibraryDeps::File;
+    use App::SharedLibraryDeps::Cache;
     my $file = App::SharedLibraryDeps::File->new(filename => $filename);
     my @deps = $file->get_shared_library_dependencies();
+    my $cache = App::SharedLibraryDeps::Cache->new();
+    $cache->add(file => $file);
     ...
 
 =head1 OBJECT METHODS
@@ -56,7 +58,7 @@ I make changes.
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc App::SharedLibraryDeps::File
+    perldoc App::SharedLibraryDeps::Cache
 
 You can also look for information at:
 
@@ -79,4 +81,4 @@ under the same terms as Perl itself.
 
 =cut
 
-1; # End of App::SharedLibraryDeps::File
+1; # End of App::SharedLibraryDeps::Cache

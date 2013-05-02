@@ -2,6 +2,7 @@ package App::SharedLibraryDeps::File;
 
 use warnings;
 use strict;
+use Moo;
 
 =head1 NAME
 
@@ -24,6 +25,21 @@ our $VERSION = '0.01';
     my $file = App::SharedLibraryDeps::File->new(filename => $filename);
     my @deps = $file->get_shared_library_dependencies();
     ...
+
+=head1 OBJECT ATTRIBUTES
+
+=over
+
+=item name
+
+Files have names, right?
+
+=cut
+
+has name => (
+    is  => q(rw),
+    isa => sub { die "File " . $_[0] . " doesn't exist" unless -r $_[0] },
+);
 
 =head1 OBJECT METHODS
 

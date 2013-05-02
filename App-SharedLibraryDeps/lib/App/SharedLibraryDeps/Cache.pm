@@ -2,6 +2,7 @@ package App::SharedLibraryDeps::Cache;
 
 use warnings;
 use strict;
+use Moo;
 
 =head1 NAME
 
@@ -27,13 +28,28 @@ our $VERSION = '0.01';
     $cache->add(file => $file);
     ...
 
-=head1 OBJECT METHODS
+=head1 OBJECT ATTRIBUTES
 
 =head2 function1
 
+=head1 OBJECT METHODS
+
+=head2 query_ld_so(file => $file)
+
+Queries the local cache for C<$file>, and the file is not found, then queries
+C</etc/ld.so.cache> via C<ldconfig --print-cache> for file C<$file>, and
+caches it's dependencies as new L<App::SharedLibraryDeps::File> objects.
+
 =cut
 
-sub function1 {
+sub query_ld_so {
+    my $self = shift;
+    my %args = @_;
+
+    die q|Missing file object (file => $file)| unless ( exists $args{file} );
+    # FIXME
+    # - stat /etc/ld.so.cache and warn if the date is older than say a week
+    #   - add an option to the command line to supress the warning
 }
 
 =head2 function2

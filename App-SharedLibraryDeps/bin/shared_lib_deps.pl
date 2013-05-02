@@ -45,7 +45,7 @@ our @options = (
     q(verbose|v+),
     q(help|h),
     # other options
-    q(files|f=s@),
+    q(file|f=s@),
     q(output|o=s),
 );
 
@@ -71,7 +71,6 @@ package SharedLibDeps::Config;
 use strict;
 use warnings;
 use Getopt::Long;
-use Log::Log4perl;
 use Pod::Usage;
 use POSIX qw(strftime);
 
@@ -118,11 +117,15 @@ key does not exist in the L<SharedLibDeps::Config> object.
 sub get {
     my $self = shift;
     my $key = shift;
+
     # turn the args reference back into a hash with a copy
     my %args = %{$self->{_args}};
 
-    if ( exists $args{$key} ) { return $args{$key}; }
-    return undef;
+    if ( exists $args{$key} ) {
+        return $args{$key};
+    } else {
+        return undef;
+    }
 } # sub get
 
 =item set( key => $value )
@@ -176,27 +179,24 @@ use Carp;
 use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 use Log::Log4perl::Level;
 
-my %pps_type = (
-    1   => q|'Directory'|,
-    2   => q|'File (Data)'|,
-    5   => q|'Root'|,
-);
-
     binmode(STDOUT, ":utf8");
-    #my $catalog_file = q(/srv/www/purl/html/Ural_Catalog/UralCatalog.xls);
-    # create a logger object
     my $config = SharedLibDeps::Config->new();
-
-    # set up the logger
-    #my $log_conf = qq(log4perl.rootLogger = WARN, Screen\n);
-    my $log_conf = qq(log4perl.rootLogger = INFO, Screen\n);
-#    if ( ! -t STDOUT ) {
-#        $log_conf .= qq(log4perl.appender.Screen = )
-#            . qq(Log::Log4perl::Appender::Screen\n);
-#    } else {
+    # create a logger object
+    my $log_conf;
+    if ( defined $config->get(q(verbose)) && $config->get(q(verbose)) > 1 ) {
+        $log_conf = qq(log4perl.rootLogger = DEBUG, Screen\n);
+    } elsif (defined $config->get(q(verbose)) && $config->get(q(verbose)) > 0) {
+        $log_conf = qq(log4perl.rootLogger = INFO, Screen\n);
+    } else {
+        $log_conf = qq(log4perl.rootLogger = WARN, Screen\n);
+    }
+    if ( ! -t STDOUT ) {
+        $log_conf .= qq(log4perl.appender.Screen = )
+            . qq(Log::Log4perl::Appender::Screen\n);
+    } else {
         $log_conf .= qq(log4perl.appender.Screen = )
             . qq(Log::Log4perl::Appender::ScreenColoredLevels\n);
-#    } # if ( $Config->get(q(o_colorlog)) )
+    }
 
     $log_conf .= qq(log4perl.appender.Screen.stderr = 1\n)
         . qq(log4perl.appender.Screen.utf8 = 1\n)
@@ -208,15 +208,19 @@ my %pps_type = (
     Log::Log4perl::init( \$log_conf );
     my $log = get_logger("");
 
-    $log->logdie(qq(Missing '--catalog' spreadsheet file argument))
-        unless ( defined $config->get(q(catalog)) );
-    $log->logdie(qq(Can't read catalog file ) . $config->get(q(catalog)) )
-        unless ( -r $config->get(q(catalog)) );
+
+    $log->logdie(qq|Missing '--file' argument(s)|)
+        unless ( defined $config->get(q(file)) );
 
     # print a nice banner
     $log->info(qq(Starting shared_lib_deps.pl, version $VERSION));
     $log->info(qq(My PID is $$));
+    $log->info(qq(Current log level is )
+        . Log::Log4perl::Level::to_level($log->level()) );
 
+    foreach my $file ( @{$config->get(q(file))} ) {
+        say "file: $file";
+    }
     # FIXME script guts go here
 
 =cut

@@ -41,6 +41,8 @@ has name => (
     isa => sub { die "File " . $_[0] . " doesn't exist" unless -r $_[0] },
 );
 
+=back
+
 =head1 OBJECT METHODS
 
 =head2 function1

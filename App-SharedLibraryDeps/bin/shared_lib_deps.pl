@@ -47,6 +47,11 @@ our @options = (
     # other options
     q(file|f=s@),
     q(output|o=s),
+    # FIXME
+    # - type of output
+    #   - plain formatted list
+    #   - kernel 'gen_init_cpio' filelist
+    #   - combination (report)
 );
 
 =head1 DESCRIPTION
@@ -56,7 +61,7 @@ L<Log::Log4perl> logging module.
 
 =head1 OBJECTS
 
-=head2 SharedLibDeps::Config
+=head2 App::SharedLibraryDeps::Config
 
 An object used for storing configuration data.
 
@@ -65,9 +70,9 @@ An object used for storing configuration data.
 =cut
 
 #############################
-# SharedLibDeps::Config #
+# App::SharedLibraryDeps::Config #
 #############################
-package SharedLibDeps::Config;
+package App::SharedLibraryDeps::Config;
 use strict;
 use warnings;
 use Getopt::Long;
@@ -78,7 +83,7 @@ use POSIX qw(strftime);
 
 =item new( )
 
-Creates the L<SharedLibDeps::Config> object, and parses out options using
+Creates the L<App::SharedLibraryDeps::Config> object, and parses out options using
 L<Getopt::Long>.
 
 =cut
@@ -110,7 +115,7 @@ sub new {
 =item get($key)
 
 Returns the scalar value of the key passed in as C<key>, or C<undef> if the
-key does not exist in the L<SharedLibDeps::Config> object.
+key does not exist in the L<App::SharedLibraryDeps::Config> object.
 
 =cut
 
@@ -130,9 +135,9 @@ sub get {
 
 =item set( key => $value )
 
-Sets in the L<SharedLibDeps::Config> object the key/value pair passed in as
+Sets in the L<App::SharedLibraryDeps::Config> object the key/value pair passed in as
 arguments.  Returns the old value if the key already existed in the
-L<SharedLibDeps::Config> object, or C<undef> otherwise.
+L<App::SharedLibraryDeps::Config> object, or C<undef> otherwise.
 
 =cut
 
@@ -180,7 +185,8 @@ use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 use Log::Log4perl::Level;
 
     binmode(STDOUT, ":utf8");
-    my $config = SharedLibDeps::Config->new();
+    my $config = App::SharedLibraryDeps::Config->new();
+    my $cache = App::SharedLibraryDeps::Cache->new();
     # create a logger object
     my $log_conf;
     if ( defined $config->get(q(verbose)) && $config->get(q(verbose)) > 1 ) {
@@ -208,7 +214,6 @@ use Log::Log4perl::Level;
     Log::Log4perl::init( \$log_conf );
     my $log = get_logger("");
 
-
     $log->logdie(qq|Missing '--file' argument(s)|)
         unless ( defined $config->get(q(file)) );
 
@@ -219,6 +224,7 @@ use Log::Log4perl::Level;
         . Log::Log4perl::Level::to_level($log->level()) );
 
     foreach my $file ( @{$config->get(q(file))} ) {
+        $cache->add(file => $file);
         say "file: $file";
     }
     # FIXME script guts go here

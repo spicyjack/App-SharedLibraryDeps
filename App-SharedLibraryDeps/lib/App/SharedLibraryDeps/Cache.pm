@@ -1,7 +1,8 @@
 package App::SharedLibraryDeps::Cache;
 
-use warnings;
 use strict;
+use warnings;
+use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 use Moo;
 
 =head1 NAME
@@ -40,6 +41,27 @@ This is some text about attribute #1.
 
 =head1 OBJECT METHODS
 
+=head2 exists_in_cache(file => $file)
+
+See if a file exists in the cache object.  Returns C<0> if the file does not
+exist, and C<1> if the file does exist.
+
+=cut
+
+sub exists_in_cache {
+    my $self = shift;
+    my %args = @_;
+
+    die q(Cache->exists_in_cache: missing 'file' argument)
+        unless (exists $args{file});
+    my $filename = $self->normalize_filename(file => $args{file});
+    if ( exists $_cache{$filename} ) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 =head2 add(file => $file)
 
 Add a file to the cache.  The process of adding a file will cause the Cache
@@ -58,14 +80,27 @@ sub add {
     my %args = @_;
 
     die q|Missing file arg (file => $file)| unless ( exists $args{file} );
-    my $file = $args{file};
+    my $file = App::SharedLibraryDeps::File->new( file => $args{file});
+
     if ( -r $file ) {
         # @file_dependencies can be checked to see if the file has already
         # been cached or not
-        if ( ! exists $_cache{$dependency->filename()} ) {
+        if ( $self->exists_in_cache(file => $file) ) {
+            # file doesn't exist in the cache; create a file object, work out
+            # it's dependencies, and add it to the cache
             my @file_dependencies = $self->_query_ld_so(file => $file);
+            # FIXME
+            # - make sure to resolve symlinks somewhere, and store them in the
+            # file object
+            # - store symlinks in the cache object, with a reference to the
+            # original LibraryFile object
             foreach my $dependency ( @file_dependencies ) {
-                #$self->add(file => $dependency->filename());
+                if ( ! exists $_cache{$dependency->filename()} ) {
+                    $self->add(file => $dependency->filename());
+                } else {
+                    # FIXME
+                    # - add the dependency here to the object's list of
+                    # dependencies
             }
         }
     }
@@ -115,6 +150,29 @@ sub _query_ld_so {
     # FIXME
     # - stat /etc/ld.so.cache and warn if the date is older than say a week
     #   - add an option to the command line to supress the warning
+}
+
+=begin internal
+
+=head2 _normalize_filename(file => $file)
+
+=end internal
+
+=cut
+
+sub _normalize_filename {
+    my $self = shift;
+    my %args = @_;
+
+    die q(Cache->exists_in_cache: missing 'file' argument)
+        unless (exists $args{file});
+
+    if ( ref($args{file}) !~ /SCALAR/ ) {
+        return $args{file};
+    } else {
+        my $file_obj = $args{file};
+        return $file_obj->filename();
+    }
 }
 
 =head1 AUTHOR

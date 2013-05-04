@@ -83,8 +83,8 @@ use POSIX qw(strftime);
 
 =item new( )
 
-Creates the L<App::SharedLibraryDeps::Config> object, and parses out options using
-L<Getopt::Long>.
+Creates the L<App::SharedLibraryDeps::Config> object, and parses out options
+using L<Getopt::Long>.
 
 =cut
 
@@ -135,8 +135,8 @@ sub get {
 
 =item set( key => $value )
 
-Sets in the L<App::SharedLibraryDeps::Config> object the key/value pair passed in as
-arguments.  Returns the old value if the key already existed in the
+Sets in the L<App::SharedLibraryDeps::Config> object the key/value pair passed
+in as arguments.  Returns the old value if the key already existed in the
 L<App::SharedLibraryDeps::Config> object, or C<undef> otherwise.
 
 =cut
@@ -179,19 +179,18 @@ package main;
 use 5.010;
 use strict;
 use warnings;
-use utf8;
 use Carp;
 use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 use Log::Log4perl::Level;
 
-    binmode(STDOUT, ":utf8");
     my $config = App::SharedLibraryDeps::Config->new();
     my $cache = App::SharedLibraryDeps::Cache->new();
     # create a logger object
     my $log_conf;
     if ( defined $config->get(q(verbose)) && $config->get(q(verbose)) > 1 ) {
         $log_conf = qq(log4perl.rootLogger = DEBUG, Screen\n);
-    } elsif (defined $config->get(q(verbose)) && $config->get(q(verbose)) > 0) {
+    } elsif ( defined $config->get(q(verbose))
+            && $config->get(q(verbose)) > 0) {
         $log_conf = qq(log4perl.rootLogger = INFO, Screen\n);
     } else {
         $log_conf = qq(log4perl.rootLogger = WARN, Screen\n);
@@ -204,10 +203,10 @@ use Log::Log4perl::Level;
             . qq(Log::Log4perl::Appender::ScreenColoredLevels\n);
     }
 
+    #. q(log4perl.appender.Screen.layout.ConversionPattern = %d %p %m%n)
     $log_conf .= qq(log4perl.appender.Screen.stderr = 1\n)
         . qq(log4perl.appender.Screen.utf8 = 1\n)
         . qq(log4perl.appender.Screen.layout = PatternLayout\n)
-        #. q(log4perl.appender.Screen.layout.ConversionPattern = %d %p %m%n)
         . q(log4perl.appender.Screen.layout.ConversionPattern )
         . qq(= %d{HH.mm.ss} %p -> %m%n\n);
     # create a logger object, and prime the logfile for this session
@@ -225,9 +224,7 @@ use Log::Log4perl::Level;
 
     foreach my $file ( @{$config->get(q(file))} ) {
         $cache->add(file => $file);
-        say "file: $file";
     }
-    # FIXME script guts go here
 
 =cut
 

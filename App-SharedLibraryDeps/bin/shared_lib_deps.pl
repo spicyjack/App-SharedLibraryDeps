@@ -179,9 +179,14 @@ package main;
 use 5.010;
 use strict;
 use warnings;
+
+# Perl core modules
 use Carp;
 use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 use Log::Log4perl::Level;
+
+# Project modules
+use App::SharedLibraryDeps::Cache;
 
     my $config = App::SharedLibraryDeps::Config->new();
     my $cache = App::SharedLibraryDeps::Cache->new();
@@ -222,8 +227,9 @@ use Log::Log4perl::Level;
     $log->info(qq(Current log level is )
         . Log::Log4perl::Level::to_level($log->level()) );
 
-    foreach my $file ( @{$config->get(q(file))} ) {
-        $cache->add(file => $file);
+    foreach my $filename ( @{$config->get(q(file))} ) {
+        $log->debug(qq(main: Adding file $filename));
+        $cache->add(filename => $filename);
     }
 
 =cut

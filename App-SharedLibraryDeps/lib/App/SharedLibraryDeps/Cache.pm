@@ -1,9 +1,17 @@
 package App::SharedLibraryDeps::Cache;
 
+# system modules
 use strict;
+use 5.010;
 use warnings;
 use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 use Moo;
+
+# local modules
+use App::SharedLibraryDeps::File;
+
+# for storing file objects once they've been queried via ld.so
+my %_cache;
 
 =head1 NAME
 
@@ -17,7 +25,6 @@ Version 0.01
 =cut
 
 our $VERSION = '0.01';
-
 
 =head1 SYNOPSIS
 
@@ -51,10 +58,12 @@ exist, and C<1> if the file does exist.
 sub exists_in_cache {
     my $self = shift;
     my %args = @_;
+    my $log = get_logger("");
 
     die q(Cache->exists_in_cache: missing 'file' argument)
         unless (exists $args{file});
     my $filename = $self->normalize_filename(file => $args{file});
+    $log->debug(q(Cache->exists_in_cache; filename: ) . $filename);
     if ( exists $_cache{$filename} ) {
         return 1;
     } else {
@@ -72,20 +81,19 @@ dependencies.
 
 =cut
 
-# for storing file objects once they've been queried via ld.so
-my %_cache;
-
 sub add {
     my $self = shift;
     my %args = @_;
+    my $log = get_logger("");
 
-    die q|Missing file arg (file => $file)| unless ( exists $args{file} );
-    my $file = App::SharedLibraryDeps::File->new( file => $args{file});
+    die q|Missing 'filename' arg)| unless ( exists $args{filename} );
+    my $file = App::SharedLibraryDeps::File->new(name => $args{filename});
+    $log->debug("Cache->add: adding " . $file->name());
 
     if ( -r $file ) {
         # @file_dependencies can be checked to see if the file has already
         # been cached or not
-        if ( $self->exists_in_cache(file => $file) ) {
+        if ( ! $self->exists_in_cache(file => $file) ) {
             # file doesn't exist in the cache; create a file object, work out
             # it's dependencies, and add it to the cache
             my @file_dependencies = $self->_query_ld_so(file => $file);
@@ -95,12 +103,14 @@ sub add {
             # - store symlinks in the cache object, with a reference to the
             # original LibraryFile object
             foreach my $dependency ( @file_dependencies ) {
-                if ( ! exists $_cache{$dependency->filename()} ) {
+                if ( ! $self->exists_in_cache(file => $file) ) {
                     $self->add(file => $dependency->filename());
                 } else {
+                    warn $file->name() . " exists in cache";
                     # FIXME
                     # - add the dependency here to the object's list of
                     # dependencies
+                }
             }
         }
     }
@@ -146,7 +156,13 @@ sub _query_ld_so {
     my $self = shift;
     my %args = @_;
 
+    warn "query_ld_so";
     die q|Missing file object (file => $file)| unless ( exists $args{file} );
+    my $file = $args{file};
+    my $cmd = q(/usr/bin/ldd ) . $file->name();
+    my @dependencies = qx/$cmd/;
+    say "Dependencies for " . $file->name() . " are:";
+    print join(qq(\n), @dependencies);
     # FIXME
     # - stat /etc/ld.so.cache and warn if the date is older than say a week
     #   - add an option to the command line to supress the warning

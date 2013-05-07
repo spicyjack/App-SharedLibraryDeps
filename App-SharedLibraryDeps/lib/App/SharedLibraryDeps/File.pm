@@ -37,8 +37,9 @@ Files have names, right?
 =cut
 
 has name => (
-    is  => q(rw),
-    isa => sub { die "File " . $_[0] . " doesn't exist" unless -r $_[0] },
+    is          => q(rw),
+    isa         => sub { die "File " . $_[0] . " not found" unless -r $_[0] },
+    required    => 1,
 );
 
 =back

@@ -62,7 +62,7 @@ sub exists_in_cache {
 
     die q(Cache->exists_in_cache: missing 'file' argument)
         unless (exists $args{file});
-    my $filename = $self->normalize_filename(file => $args{file});
+    my $filename = $self->_normalize_filename(file => $args{file});
     $log->debug(q(Cache->exists_in_cache; filename: ) . $filename);
     if ( exists $_cache{$filename} ) {
         return 1;
@@ -86,11 +86,12 @@ sub add {
     my %args = @_;
     my $log = get_logger("");
 
-    die q|Missing 'filename' arg)| unless ( exists $args{filename} );
+    die q|Missing 'filename' arg| unless ( exists $args{filename} );
     my $file = App::SharedLibraryDeps::File->new(name => $args{filename});
     $log->debug("Cache->add: adding " . $file->name());
 
-    if ( -r $file ) {
+    if ( -r $file->name() ) {
+        $log->debug("Cache->add: " . $file->name() . " is readable");
         # @file_dependencies can be checked to see if the file has already
         # been cached or not
         if ( ! $self->exists_in_cache(file => $file) ) {
@@ -103,16 +104,22 @@ sub add {
             # - store symlinks in the cache object, with a reference to the
             # original LibraryFile object
             foreach my $dependency ( @file_dependencies ) {
+
+                $log->debug("Cache->add: Checking for $dependency in cache");
                 if ( ! $self->exists_in_cache(file => $file) ) {
-                    $self->add(file => $dependency->filename());
+                    $self->add(filename => $dependency);
                 } else {
-                    warn $file->name() . " exists in cache";
+                    $log->debug($file->name() . " exists in cache");
                     # FIXME
                     # - add the dependency here to the object's list of
                     # dependencies
                 }
             }
+        } else {
+            $log->debug($file->name() . " exists in cache");
         }
+    } else {
+        $log->warn("Cache->add: " . $file->name() . " is *not* readable");
     }
 }
 
@@ -144,9 +151,9 @@ The default sort is C<time_asc>.
 
 =head2 _query_ld_so(file => $file)
 
-Queries the local cache for C<$file>, and the file is not found, then queries
-C</etc/ld.so.cache> via C<ldconfig --print-cache> for file C<$file>, and
-caches it's dependencies as new L<App::SharedLibraryDeps::File> objects.
+Queries the local cache for C<$file>, and if the file is not found in the
+local cache, queries C<ldd> for file C<$file>, and caches it's dependencies as
+new L<App::SharedLibraryDeps::File> objects.
 
 =end internal
 
@@ -156,16 +163,23 @@ sub _query_ld_so {
     my $self = shift;
     my %args = @_;
 
-    warn "query_ld_so";
     die q|Missing file object (file => $file)| unless ( exists $args{file} );
     my $file = $args{file};
     my $cmd = q(/usr/bin/ldd ) . $file->name();
     my @dependencies = qx/$cmd/;
-    say "Dependencies for " . $file->name() . " are:";
-    print join(qq(\n), @dependencies);
+    chomp(@dependencies);
+    #say "Dependencies for " . $file->name() . " are:";
+    #print join(qq(\n), @dependencies);
+    # FIXME split the output of ldd here, create new File objects for each
+    # dependency, return the File objects to the caller
+    foreach $dep ( @dependencies ) {
+        $dep =~ /.*([a-zA-Z0-9\/]) => (\/.*) \((0x.*)\)/;
+    }
     # FIXME
     # - stat /etc/ld.so.cache and warn if the date is older than say a week
     #   - add an option to the command line to supress the warning
+
+    return @dependencies;
 }
 
 =begin internal
@@ -183,11 +197,11 @@ sub _normalize_filename {
     die q(Cache->exists_in_cache: missing 'file' argument)
         unless (exists $args{file});
 
-    if ( ref($args{file}) !~ /SCALAR/ ) {
+    if ( ref($args{file}) =~ /SCALAR/ ) {
         return $args{file};
     } else {
         my $file_obj = $args{file};
-        return $file_obj->filename();
+        return $file_obj->name();
     }
 }
 

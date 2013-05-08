@@ -4,6 +4,8 @@ use warnings;
 use strict;
 use Moo;
 
+my (%_deps, %reverse_deps);
+
 =head1 NAME
 
 App::SharedLibraryDeps::File - A file on the filesystem that may have
@@ -32,7 +34,7 @@ our $VERSION = '0.01';
 
 =item name
 
-Files have names, right?
+B<Required> - Files have names, right?
 
 =cut
 
@@ -40,6 +42,17 @@ has name => (
     is          => q(rw),
     isa         => sub { die "File " . $_[0] . " not found" unless -r $_[0] },
     required    => 1,
+);
+
+=item load_address
+
+Address that a shared library will load in to when called by the linker.
+
+=cut
+
+has load_address => (
+    is          => q(rw),
+    isa         => sub { $_[0] =~ /^0x[a-fA-F0-9]+$/ },
 );
 
 =back

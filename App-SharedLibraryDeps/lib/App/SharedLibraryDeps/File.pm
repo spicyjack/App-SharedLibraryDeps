@@ -39,8 +39,26 @@ B<Required> - Files have names, right?
 =cut
 
 has name => (
-    is          => q(rw),
+    is          => q(ro),
     isa         => sub { die "File " . $_[0] . " not found" unless -r $_[0] },
+    required    => 1,
+);
+
+=item static_lib
+
+B<Required> - Whether or not this file or library is a static library (0 = not
+static library, 1 = static library)
+
+=cut
+
+has static_lib => (
+    is          => q(ro),
+    isa         => sub { die "Not a boolean value" unless ($_[0] =~ /nN0yY1/) },
+    trigger     => sub {
+                    # reset the value of static_lib if it's /nNyY/
+                    if ( $_[0] =~ /nN/ ) { return 0; }
+                    if ( $_[0] =~ /yY/ ) { return 1; }
+    },
     required    => 1,
 );
 
@@ -51,26 +69,45 @@ Address that a shared library will load in to when called by the linker.
 =cut
 
 has load_address => (
-    is          => q(rw),
+    is          => q(ro),
     isa         => sub { $_[0] =~ /^0x[a-fA-F0-9]+$/ },
+    default     => 0,
 );
 
 =back
 
 =head1 OBJECT METHODS
 
-=head2 function1
+=head2 add_dep($dep)
+
+Add a library dependency for this file object.
 
 =cut
 
-sub function1 {
+sub add_dep {
+    my $self = shift;
+    my $dep = shift;
+    $_deps{$dep}++;
 }
 
-=head2 function2
+=head2 add_reverse_dep($dep)
+
+Add a "reverse dependency" to this file.  Useful for showing what might break
+if a given library was removed from  an archive.
 
 =cut
 
-sub function2 {
+sub add_reverse_dep {
+}
+
+=head2 is_static_lib()
+
+Returns
+if a given library was removed from  an archive.
+
+=cut
+
+sub add_reverse_dep {
 }
 
 =head1 AUTHOR

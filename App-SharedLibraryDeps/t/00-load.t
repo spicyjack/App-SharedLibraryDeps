@@ -3,7 +3,8 @@
 use Test::More tests => 1;
 
 BEGIN {
-	use_ok( 'App::SharedLibraryDeps' );
+    use_ok( q(App::SharedLibraryDeps) );
 }
 
-diag( "Testing App::SharedLibraryDeps $App::SharedLibraryDeps::VERSION, Perl $], $^X" );
+diag( qq(Testing App::SharedLibraryDeps $App::SharedLibraryDeps::VERSION, )
+    . qq(Perl $], $^X) );

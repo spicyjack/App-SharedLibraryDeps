@@ -40,7 +40,8 @@ B<Required> - Files have names, right?
 
 has name => (
     is          => q(ro),
-    isa         => sub { die "File " . $_[0] . " not found" unless -r $_[0] },
+    isa         => sub { die "File " . $_[0] . " not found"
+        unless (-r $_[0] || $_[0] =~ /linux-[vdso|gate]/) },
     required    => 1,
 );
 
@@ -53,7 +54,27 @@ static library, 1 = static library)
 
 has static_lib => (
     is          => q(ro),
-    isa         => sub { die "Not a boolean value" unless ($_[0] =~ /nN0yY1/) },
+    isa         => sub { die "Not a boolean value"
+        unless ($_[0] =~ /n|N|0|y|Y|1/) },
+    trigger     => sub {
+                    # reset the value of static_lib if it's /nNyY/
+                    if ( $_[0] =~ /nN/ ) { return 0; }
+                    if ( $_[0] =~ /yY/ ) { return 1; }
+    },
+    required    => 1,
+);
+
+=item virtual_lib
+
+B<Required> - Whether or not this file or library is a virtual library (0 = not
+virtual library, 1 = virtual library)
+
+=cut
+
+has virtual_lib => (
+    is          => q(ro),
+    isa         => sub { die "Not a boolean value"
+        unless ($_[0] =~ /n|N|0|y|Y|1/) },
     trigger     => sub {
                     # reset the value of static_lib if it's /nNyY/
                     if ( $_[0] =~ /nN/ ) { return 0; }
@@ -71,7 +92,7 @@ Address that a shared library will load in to when called by the linker.
 has load_address => (
     is          => q(ro),
     isa         => sub { $_[0] =~ /^0x[a-fA-F0-9]+$/ },
-    default     => 0,
+    default     => "N/A",
 );
 
 =back
@@ -102,12 +123,27 @@ sub add_reverse_dep {
 
 =head2 is_static_lib()
 
-Returns
-if a given library was removed from  an archive.
+Returns true (C<1>) if a file is a static library.
 
 =cut
 
-sub add_reverse_dep {
+sub is_static_lib {
+    my $self = shift;
+    return $self->static_lib();
+}
+
+=head2 is_virtual_lib()
+
+Returns true (C<1>) if a file is a "virtual" library, or the shim library
+between a Linux kernel and the other libraries on the system.  See
+L<http://www.linuxjournal.com/content/creating-vdso-colonels-other-chicken>
+for a more "in-depth" explanation.
+
+=cut
+
+sub is_virutal_lib {
+    my $self = shift;
+    return $self->virtual_lib();
 }
 
 =head1 AUTHOR

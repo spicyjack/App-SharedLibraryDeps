@@ -44,6 +44,7 @@ our @options = (
     # script options
     q(verbose|v+),
     q(help|h),
+    q(colorize|c),
     # other options
     q(file|f=s@),
     q(output|o=s),
@@ -200,12 +201,12 @@ use App::SharedLibraryDeps::Cache;
     } else {
         $log_conf = qq(log4perl.rootLogger = WARN, Screen\n);
     }
-    if ( ! -t STDOUT ) {
-        $log_conf .= qq(log4perl.appender.Screen = )
-            . qq(Log::Log4perl::Appender::Screen\n);
-    } else {
+    if ( -t STDOUT || defined $config->get(q(colorize)) ) {
         $log_conf .= qq(log4perl.appender.Screen = )
             . qq(Log::Log4perl::Appender::ScreenColoredLevels\n);
+    } else {
+        $log_conf .= qq(log4perl.appender.Screen = )
+            . qq(Log::Log4perl::Appender::Screen\n);
     }
 
     #. q(log4perl.appender.Screen.layout.ConversionPattern = %d %p %m%n)

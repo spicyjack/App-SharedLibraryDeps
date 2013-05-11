@@ -71,48 +71,41 @@ sub add {
     my $filename = $args{filename};
     $log->debug(q(Cache->add: adding ) . $filename);
 
-    if ( -r $filename ) {
-        $log->debug(q(Cache->add: ) . $filename . q( is readable));
-        # @file_dependencies can be checked to see if the file has already
-        # been cached or not
-        if ( ! $self->_get_from_cache(file => $filename) ) {
-            # file doesn't exist in the cache; create a file object, work out
-            # it's dependencies, and add it to the cache
-            my @file_dependencies = $self->_query_ldd(file => $filename);
-            $log->debug(q(Cache->add: _query_ldd returned )
-                . scalar(@file_dependencies) . qq( dependencies for $filename));
-            #$log->debug(join(":", @file_dependencies));
-            # FIXME
-            # - make sure to resolve symlinks somewhere, and store them in the
-            # file object
-            # - store symlinks in the cache object, with a reference to the
-            # original LibraryFile object
-            foreach my $dependency ( @file_dependencies ) {
-                $log->debug(qq(Cache->add: Checking for $dependency in cache));
-                if ( ! $self->_get_from_cache(file => $filename) ) {
-                    # FIXME $self->add doesn't return anything; how will the
-                    # cache be populated?
-                    $self->add(filename => $dependency);
-                } else {
-                    $log->debug($dependency . q( exists in cache));
-                    # FIXME
-                    # - add the dependency here to the object's list of
-                    # dependencies
-                }
+    if ( ! $self->_get_from_cache(file => $filename) ) {
+        # file doesn't exist in the cache; create a file object, work out
+        # it's dependencies, and add it to the cache
+        my @file_dependencies = $self->_query_ldd(file => $filename);
+        $log->debug(q(Cache->add: _query_ldd returned )
+            . scalar(@file_dependencies) . qq( dependencies for $filename));
+        #$log->debug(join(":", @file_dependencies));
+        # FIXME
+        # - make sure to resolve symlinks somewhere, and store them in the
+        # file object
+        # - store symlinks in the cache object, with a reference to the
+        # original LibraryFile object
+        foreach my $dependency ( @file_dependencies ) {
+            $log->debug(qq(Cache->add: Checking for $dependency in cache));
+            if ( ! $self->_get_from_cache(file => $filename) ) {
+                # FIXME $self->add doesn't return anything; how will the
+                # cache be populated?
+                $self->add(filename => $dependency);
+            } else {
+                $log->debug($dependency . q( exists in cache));
+                # FIXME
+                # - add the dependency here to the object's list of
+                # dependencies
             }
-        } else {
-            $log->debug($filename . q( exists in cache));
         }
     } else {
-        $log->warn("Cache->add: " . $filename . " is *not* readable");
+        $log->debug($filename . q( exists in cache));
     }
 }
 
-=head2 dependencies_for_file(file => $file, order_by => $sort_order)
+=head2 dependencies(file => $file, order_by => $sort, return_format => $type)
 
-Return a list of L<App::SharedLibraryDeps::File> objects for the filename
-given as C<$file>, ordered by C<$sort_order>.  C<$sort_order> can be one of
-the following:
+Return a list of files for the filename given as C<$file>, ordered by
+C<$sort>, with a return format of C<$type>.  C<$sort> can be one of the
+following:
 
 =over
 
@@ -130,7 +123,46 @@ Alphabetical by filename and file path
 
 =back
 
-The default sort is C<time_asc>.
+The default sort is C<time_asc>.  Return format can be one of the following:
+
+=over
+
+=item objects
+
+An array of L<App::SharedLibraryDeps::File> objects, each object representing
+a shared library dependency.
+
+=item filelist
+
+A text-based list of files in the same format that the Linux kernel utility
+C<gen_init_cpio> uses as input to determine which files to add to an
+I<initramfs> image.
+
+=cut
+
+sub dependencies {
+    my $self = shift;
+    my %args = @_;
+    my $log = get_logger("");
+
+    die q|Missing file object (file => $file)| unless ( exists $args{file} );
+    die q|Missing sorting order (order_by => $sort)|
+        unless ( exists $args{file} );
+    die q|Missing return type (return_type=> $type)|
+        unless ( exists $args{return_type} );
+
+    if ( -r $filename ) {
+        $log->debug(q(Cache->dependencies: ) . $filename . q( is readable));
+        # @file_dependencies can be checked to see if the file has already
+        # been cached or not
+        my @dependencies;
+        if ( ! $self->_get_from_cache(file => $filename) ) {
+            $self->add(file => $filename);
+        }
+    } else {
+        $log->warn("Cache->dependencies: " . $filename . " is *not* readable");
+    }
+}
 
 =begin internal
 

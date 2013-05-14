@@ -101,11 +101,11 @@ sub add {
     }
 }
 
-=head2 dependencies(file => $file, order_by => $sort, return_format => $type)
+=head2 get_dependencies(filename => $file, [sort => $sort, return_format => $type])
 
-Return a list of files for the filename given as C<$file>, ordered by
-C<$sort>, with a return format of C<$type>.  C<$sort> can be one of the
-following:
+Return a list of files for the filename given as C<$file> (required), ordered
+by C<$sort> (optional), with a return format of C<$type> (optional).  C<$sort>
+can be one of the following:
 
 =over
 
@@ -138,24 +138,38 @@ A text-based list of files in the same format that the Linux kernel utility
 C<gen_init_cpio> uses as input to determine which files to add to an
 I<initramfs> image.
 
+=back
+
 =cut
 
-sub dependencies {
+sub get_dependencies {
     my $self = shift;
     my %args = @_;
     my $log = get_logger("");
 
-    die q|Missing file object (file => $file)| unless ( exists $args{file} );
-    die q|Missing sorting order (order_by => $sort)|
-        unless ( exists $args{file} );
-    die q|Missing return type (return_type=> $type)|
-        unless ( exists $args{return_type} );
+    # sort and return_type are optional
+    die q|Missing filename (filename => $file)|
+        unless ( exists $args{filename} );
 
+    my $filename = $args{file};
+    my $sort_order = $args{sort};
+    my $return_type = $args{return_type};
+
+    if ( ! defined $filename ) {
+        $log->warn(q|Cache->dependencies; 'filename' argument undefined|);
+        return ();
+    }
     if ( -r $filename ) {
         $log->debug(q(Cache->dependencies: ) . $filename . q( is readable));
         # @file_dependencies can be checked to see if the file has already
         # been cached or not
         my @dependencies;
+        if ( ! $self->_get_from_cache(file => $filename) ) {
+            $self->add(file => $filename);
+        }
+    } elsif ( $filename =~ /linux-[gate|vdso].*/ ) {
+        $log->debug(q(Cache->dependencies: )
+            . $filename . q( is a virtual file));
         if ( ! $self->_get_from_cache(file => $filename) ) {
             $self->add(file => $filename);
         }

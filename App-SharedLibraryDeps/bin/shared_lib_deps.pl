@@ -228,10 +228,12 @@ use App::SharedLibraryDeps::Cache;
     $log->info(qq(Current log level is )
         . Log::Log4perl::Level::to_level($log->level()) );
 
+    my @dependencies;
     foreach my $filename ( @{$config->get(q(file))} ) {
         $log->debug(qq(main: Adding file $filename));
-        $cache->add(filename => $filename);
+        @dependencies = $cache->get_dependencies(filename => $filename);
     }
+    say(join(", ", @dependencies));
 
 =cut
 

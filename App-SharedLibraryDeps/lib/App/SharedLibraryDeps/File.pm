@@ -40,8 +40,9 @@ B<Required> - Files have names, right?
 
 has name => (
     is          => q(ro),
-    isa         => sub { die "File " . $_[0] . " not found"
-        unless (-r $_[0] || $_[0] =~ /linux-[vdso|gate]/) },
+    # check for a file readable on the filesystem, or the kernel virtual stub
+    # file
+    isa         => sub { -r $_[0] || $_[0] =~ /linux-[vdso|gate]/ },
     required    => 1,
 );
 
@@ -54,7 +55,7 @@ static library, 1 = static library)
 
 has static_lib => (
     is          => q(ro),
-    isa         => sub { die "Not a boolean value"
+    isa         => sub { warn "Not a boolean value"
         unless ($_[0] =~ /n|N|0|y|Y|1/) },
     trigger     => sub {
                     # reset the value of static_lib if it's /nNyY/
@@ -73,7 +74,7 @@ virtual library, 1 = virtual library)
 
 has virtual_lib => (
     is          => q(ro),
-    isa         => sub { die "Not a boolean value"
+    isa         => sub { warn "Not a boolean value"
         unless ($_[0] =~ /n|N|0|y|Y|1/) },
     trigger     => sub {
                     # reset the value of static_lib if it's /nNyY/

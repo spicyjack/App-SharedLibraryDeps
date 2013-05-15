@@ -6,6 +6,7 @@ use 5.010;
 use warnings;
 use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Terse = 1;
 use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 use Moo;
 
@@ -40,72 +41,10 @@ our $VERSION = '0.01';
 
 =head1 OBJECT ATTRIBUTES
 
-=over
+=head2 sort_order
 
-=item attribute1
-
-This is some text about attribute #1.
-
-=back
-
-=head1 OBJECT METHODS
-
-
-=head2 add(file => $file)
-
-Add a file to the cache.  The process of adding a file will cause the Cache
-manager to recursively query C<ld.so> for that file's dependencies; in other
-words, the Cache manager will know the dependencies of the original file, plus
-all of the files that were queried as part of the original file's
-dependencies.
-
-=cut
-
-sub add {
-    my $self = shift;
-    my %args = @_;
-    my $log = get_logger("");
-
-    die q|Missing 'filename' arg| unless ( exists $args{filename} );
-    #my $file = App::SharedLibraryDeps::File->new(name => $args{filename});
-    my $filename = $args{filename};
-    $log->debug(q(Cache->add: adding ) . $filename);
-
-    if ( ! $self->_get_from_cache(file => $filename) ) {
-        # file doesn't exist in the cache; create a file object, work out
-        # it's dependencies, and add it to the cache
-        my @file_dependencies = $self->_query_ldd(file => $filename);
-        $log->debug(q(Cache->add: _query_ldd returned )
-            . scalar(@file_dependencies) . qq( dependencies for $filename));
-        #$log->debug(join(":", @file_dependencies));
-        # FIXME
-        # - make sure to resolve symlinks somewhere, and store them in the
-        # file object
-        # - store symlinks in the cache object, with a reference to the
-        # original LibraryFile object
-        foreach my $dependency ( @file_dependencies ) {
-            $log->debug(qq(Cache->add: Checking for $dependency in cache));
-            if ( ! $self->_get_from_cache(file => $filename) ) {
-                # FIXME $self->add doesn't return anything; how will the
-                # cache be populated?
-                $self->add(filename => $dependency);
-            } else {
-                $log->debug($dependency . q( exists in cache));
-                # FIXME
-                # - add the dependency here to the object's list of
-                # dependencies
-            }
-        }
-    } else {
-        $log->debug($filename . q( exists in cache));
-    }
-}
-
-=head2 get_dependencies(filename => $file, [sort => $sort, return_format => $type])
-
-Return a list of files for the filename given as C<$file> (required), ordered
-by C<$sort> (optional), with a return format of C<$type> (optional).  C<$sort>
-can be one of the following:
+The sort order for sorting files that are returned to the caller as the list
+of dependencies.  Sort order can be one of the following:
 
 =over
 
@@ -123,7 +62,23 @@ Alphabetical by filename and file path
 
 =back
 
-The default sort is C<time_asc>.  Return format can be one of the following:
+The default sort is C<time_asc>.
+
+=cut
+
+has sort_order => (
+    is          => q(ro),
+    isa         => sub { $_[0] =~ // },
+);
+
+=head1 OBJECT METHODS
+
+=head2 get_dependencies(filename => $file, [sort => $sort, return_format => $type])
+
+Return a list of files for the filename given as C<$file> (required), ordered
+by C<$sort> (optional), with a return format of C<$type> (optional).  C<$sort>
+is documented above for the C<sort_order> attribute.  Return format can be one
+of the following:
 
 =over
 
@@ -151,7 +106,7 @@ sub get_dependencies {
     die q|Missing filename (filename => $file)|
         unless ( exists $args{filename} );
 
-    my $filename = $args{file};
+    my $filename = $args{filename};
     my $sort_order = $args{sort};
     my $return_type = $args{return_type};
 
@@ -164,17 +119,70 @@ sub get_dependencies {
         # @file_dependencies can be checked to see if the file has already
         # been cached or not
         my @dependencies;
-        if ( ! $self->_get_from_cache(file => $filename) ) {
-            $self->add(file => $filename);
+        if ( ! $self->_get_from_cache(filename => $filename) ) {
+            #@dependencies = $self->add(file => $filename);
+            $self->add(filename => $filename);
         }
     } elsif ( $filename =~ /linux-[gate|vdso].*/ ) {
         $log->debug(q(Cache->dependencies: )
             . $filename . q( is a virtual file));
-        if ( ! $self->_get_from_cache(file => $filename) ) {
-            $self->add(file => $filename);
+        if ( ! $self->_get_from_cache(filename => $filename) ) {
+            $self->add(filename => $filename);
         }
     } else {
         $log->warn("Cache->dependencies: " . $filename . " is *not* readable");
+    }
+}
+
+=head2 add(file => $file)
+
+Add a file to the cache.  The process of adding a file will cause the Cache
+manager to recursively query C<ld.so> for that file's dependencies; in other
+words, the Cache manager will know the dependencies of the original file, plus
+all of the files that were queried as part of the original file's
+dependencies.
+
+=cut
+
+sub add {
+    my $self = shift;
+    my %args = @_;
+    my $log = get_logger("");
+
+    die q|Missing 'filename' arg| unless ( exists $args{filename} );
+    #my $file = App::SharedLibraryDeps::File->new(name => $args{filename});
+    my $filename = $args{filename};
+    $log->debug(q(Cache->add: adding ) . $filename);
+
+    if ( ! $self->_get_from_cache(filename => $filename) ) {
+        # file doesn't exist in the cache; create a file object, work out
+        # it's dependencies, and add it to the cache
+        my @file_dependencies = $self->_query_ldd(file => $filename);
+        $log->debug(q(Cache->add: _query_ldd returned )
+            . scalar(@file_dependencies) . qq( dependencies for $filename));
+        #$log->debug(join(":", @file_dependencies));
+        # FIXME
+        $log->warn(q(Dumping cache));
+        warn Dumper {%_cache};
+        # - make sure to resolve symlinks somewhere, and store them in the
+        # file object
+        # - store symlinks in the cache object, with a reference to the
+        # original LibraryFile object
+        foreach my $dependency ( @file_dependencies ) {
+            $log->debug(qq(Cache->add: Checking for $dependency in cache));
+            if ( ! $self->_get_from_cache(filename => $filename) ) {
+                # FIXME $self->add doesn't return anything; how will the
+                # cache be populated?
+                $self->add(filename => $dependency);
+            } else {
+                $log->debug($dependency . q( exists in cache));
+                # FIXME
+                # - add the dependency here to the object's list of
+                # dependencies
+            }
+        }
+    } else {
+        $log->debug($filename . q( exists in cache));
     }
 }
 
@@ -200,7 +208,7 @@ sub _query_ldd {
     my @dependencies;
     chomp(@ldd_output);
     #say "Dependencies for " . $file->name() . " are:";
-    #print join(qq(\n), @ldd_output);
+    #say join(qq(\n), @ldd_output);
     # FIXME split the output of ldd here, create new File objects for each
     # dependency, return the File objects to the caller
     foreach my $library ( @ldd_output ) {
@@ -234,7 +242,7 @@ sub _query_ldd {
         } else {
             $log->logdie(qq(Can't determine dependency info for $library));
         }
-        my $file = $self->_get_from_cache(file => $libfile);
+        my $file = $self->_get_from_cache(filename => $libfile);
         if ( defined $file ) {
             $log->info(q(Adding ) . $file->name() . q( to dependencies));
             push(@dependencies, $2);
@@ -295,7 +303,7 @@ sub _add_to_cache {
     my %args = @_;
     my $log = get_logger("");
 
-    die q(Cache->_get_from_cache: missing 'file' argument)
+    die q(Cache->_add_to_cache: missing 'file' argument)
         unless (exists $args{file});
     #my $filename = $self->_normalize_filename(file => $args{file});
     my $file = $args{file};
@@ -327,15 +335,15 @@ sub _get_from_cache {
     my %args = @_;
     my $log = get_logger("");
 
-    die q(Cache->_get_from_cache: missing 'file' argument)
-        unless (exists $args{file});
-    my $filename = $self->_normalize_filename(file => $args{file});
+    die q(Cache->_get_from_cache: missing 'filename' argument)
+        unless (exists $args{filename});
+    my $filename = $self->_normalize_filename(file => $args{filename});
     $log->debug(q(Cache->_get_from_cache; filename: ) . $filename);
     if ( exists $_cache{$filename} ) {
-        $log->debug(q(Cache->_get_from_cache; file exists));
+        $log->debug(q(Cache->_get_from_cache; file exists in cache));
         $_cache{$filename}
     } else {
-        $log->debug(q(Cache->_get_from_cache; file doesn't exist));
+        $log->debug(q(Cache->_get_from_cache; file doesn't exist in cache));
         return undef;
     }
 }

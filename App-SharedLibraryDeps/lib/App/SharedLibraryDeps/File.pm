@@ -32,16 +32,25 @@ our $VERSION = '0.01';
 
 =over
 
-=item name
+=item libname
 
-B<Required> - Files have names, right?
+B<Required> - The name of the library file that will be used by the linker
+when linking that library into a binary.  In the output of C<ldd>, this is the
+name of the library on the B<left> hand side of each line of the output.
 
 =cut
 
-has name => (
+has libname => (
     is          => q(ro),
-    # check for a file readable on the filesystem, or the kernel virtual stub
-    # file
+    # is the libname a "shared object" library name?
+    isa         => sub { $_[0] =~ /\.so\.\d+$/ },
+    required    => 1,
+);
+
+has libfile => (
+    is          => q(ro),
+    # check for a file readable on the filesystem,
+    # or the kernel virtual stub file
     isa         => sub { -r $_[0] || $_[0] =~ /linux-[vdso|gate]/ },
     required    => 1,
 );

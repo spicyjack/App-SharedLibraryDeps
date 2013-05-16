@@ -214,7 +214,7 @@ use App::SharedLibraryDeps::Cache;
         . qq(log4perl.appender.Screen.utf8 = 1\n)
         . qq(log4perl.appender.Screen.layout = PatternLayout\n)
         . q(log4perl.appender.Screen.layout.ConversionPattern )
-        . qq(= %d{HH.mm.ss} %p -> %m%n\n);
+        . qq(= %d{HH.mm.ss} %p L:%L -> %m%n\n);
     # create a logger object, and prime the logfile for this session
     Log::Log4perl::init( \$log_conf );
     my $log = get_logger("");

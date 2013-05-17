@@ -3,7 +3,6 @@
 use Test::More tests => 7;
 #use Test::More;
 use Test::File;
-use Test::ConsistentVersion;
 
 BEGIN {
     ## TEST

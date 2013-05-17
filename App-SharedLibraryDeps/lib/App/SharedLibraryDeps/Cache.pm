@@ -319,6 +319,8 @@ sub _query_ldd {
                 . q( to cache and dependencies));
             $self->_add_to_cache(file => $file_obj);
             push(@dependencies, $file_obj->filename());
+            # FIXME verify this will work
+            #$file_obj->deps($filename);
         }
     }
     $log->info(qq(Cache->_query_ldd: returning; $filename has )

@@ -4,6 +4,13 @@ Makefile.PL
 README
 bin/shared_lib_deps.pl
 lib/App/SharedLibraryDeps.pm
+lib/App/SharedLibraryDeps/Cache.pm
+lib/App/SharedLibraryDeps/File.pm
 t/00-load.t
+t/01-module_versions.t
+t/10-App-SharedLibraryDeps-Cache.t
+t/11-App-SharedLibraryDeps-File.t
+t/boilerplate.t
 t/pod-coverage.t
 t/pod.t
+t/tests.log4perl.cfg

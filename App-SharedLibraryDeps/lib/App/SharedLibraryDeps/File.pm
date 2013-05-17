@@ -118,7 +118,7 @@ Add a library dependency for this file object.
 sub add_dep {
     my $self = shift;
     my $dep = shift;
-    $_deps{$dep}++;
+    $_deps{$dep->filename()}++;
 }
 
 =head2 add_reverse_dep($dep)
@@ -129,6 +129,9 @@ if a given library was removed from  an archive.
 =cut
 
 sub add_reverse_dep {
+    my $self = shift;
+    my $dep = shift;
+    $_deps{$dep->filename()}++;
 }
 
 =head2 is_static_lib()

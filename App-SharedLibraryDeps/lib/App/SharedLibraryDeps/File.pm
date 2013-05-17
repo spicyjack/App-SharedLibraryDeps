@@ -47,7 +47,7 @@ has libname => (
     required    => 1,
 );
 
-has libfile => (
+has filename => (
     is          => q(ro),
     # check for a file readable on the filesystem,
     # or the kernel virtual stub file

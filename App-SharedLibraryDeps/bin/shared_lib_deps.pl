@@ -7,8 +7,8 @@
 
 =head1 NAME
 
-B<shared_lib_deps.pl> - A Perl script template that uses the
-L<Log::Log4perl> logging module.
+B<shared_lib_deps.pl> - Determine the shared library dependencies for a given
+set of files.
 
 =head1 VERSION
 
@@ -57,8 +57,8 @@ our @options = (
 
 =head1 DESCRIPTION
 
-B<shared_lib_deps.pl> - A Perl script template that uses the
-L<Log::Log4perl> logging module.
+B<shared_lib_deps.pl> - Determine the shared library dependencies for a given
+set of files.
 
 =head1 OBJECTS
 

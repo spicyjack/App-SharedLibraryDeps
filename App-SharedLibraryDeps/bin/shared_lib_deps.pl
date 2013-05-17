@@ -232,7 +232,10 @@ use App::SharedLibraryDeps::Cache;
     foreach my $filename ( @{$config->get(q(file))} ) {
         $log->debug(qq(main: Adding file $filename));
         @dependencies = $cache->get_dependencies(filename => $filename);
-        say qq(Dependencies for $filename: ) . join(", ", @dependencies);
+        say qq(Dependencies for $filename: );
+        foreach my $dep ( sort(@dependencies) ) {
+            say qq(- $dep);
+        }
     }
 
 =cut

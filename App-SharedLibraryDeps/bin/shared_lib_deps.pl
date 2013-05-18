@@ -25,6 +25,7 @@ our $VERSION = '0.01';
  Script options:
  -v|--verbose       Verbose script execution
  -h|--help          Shows this help text
+ -c|--colorize      Always colorize log output (not filelist output)
 
  Other script options:
  -f|--file          Discover dependencies for these files

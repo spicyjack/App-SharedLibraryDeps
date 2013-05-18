@@ -154,7 +154,7 @@ for a more "in-depth" explanation.
 
 =cut
 
-sub is_virutal_lib {
+sub is_virtual_lib {
     my $self = shift;
     return $self->virtual_lib();
 }

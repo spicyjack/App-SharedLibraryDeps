@@ -102,7 +102,9 @@ Address that a shared library will load in to when called by the linker.
 has load_address => (
     is          => q(ro),
     isa         => sub { $_[0] =~ /^0x[a-fA-F0-9]+$/ },
-    default     => "N/A",
+    # this is broken on older versions of Moo
+    #default     => q(N/A),
+    default     => sub { return q(N/A) },
 );
 
 =back
@@ -154,7 +156,7 @@ for a more "in-depth" explanation.
 
 =cut
 
-sub is_virutal_lib {
+sub is_virtual_lib {
     my $self = shift;
     return $self->virtual_lib();
 }

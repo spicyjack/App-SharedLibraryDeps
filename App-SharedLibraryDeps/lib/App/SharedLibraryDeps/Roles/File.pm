@@ -4,7 +4,7 @@ use warnings;
 use strict;
 use Moo::Role;
 
-my (%_deps);
+my (%_deps, %_reverse_deps);
 
 =head1 NAME
 
@@ -51,7 +51,9 @@ has filename => (
 
 =head2 add_dep($dep)
 
-Add a library dependency for this file object.
+Accepts an L<App::SharedLibraryDeps::BinFile> or
+L<App::SharedLibraryDeps::LibFile> object, and adds that object as a dependency
+for this file object.
 
 =cut
 
@@ -59,6 +61,20 @@ sub add_dep {
     my $self = shift;
     my $dep = shift;
     $_deps{$dep->filename()}++;
+}
+
+=head2 add_reverse_dep($dep)
+
+Accepts an L<App::SharedLibraryDeps::BinFile> or
+L<App::SharedLibraryDeps::LibFile> object, and adds that object as a "reverse
+dependency" for this file object.
+
+=cut
+
+sub add_reverse_dep {
+    my $self = shift;
+    my $dep = shift;
+    $_reverse_deps{$dep->filename()}++;
 }
 
 =head1 AUTHOR

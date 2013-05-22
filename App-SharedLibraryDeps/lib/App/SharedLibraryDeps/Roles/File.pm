@@ -2,7 +2,7 @@ package App::SharedLibraryDeps::Roles::File;
 
 use warnings;
 use strict;
-use Moo;
+use Moo::Role;
 
 my (%_deps);
 

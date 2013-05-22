@@ -41,10 +41,10 @@ name of the library on the B<left> hand side of each line of the output.
 =cut
 
 has libname => (
-    is          => q(ro),
+    is          => q(rw),
     # is the libname a "shared object" library name?
     isa         => sub { $_[0] =~ /\.so\.\d+$/ },
-    required    => 1,
+#    required    => 1,
 );
 
 has filename => (
@@ -63,7 +63,7 @@ static library, 1 = static library)
 =cut
 
 has static_lib => (
-    is          => q(ro),
+    is          => q(rw),
     isa         => sub { warn "Not a boolean value"
         unless ($_[0] =~ /n|N|0|y|Y|1/) },
     trigger     => sub {
@@ -71,7 +71,7 @@ has static_lib => (
                     if ( $_[0] =~ /nN/ ) { return 0; }
                     if ( $_[0] =~ /yY/ ) { return 1; }
     },
-    required    => 1,
+#    required    => 1,
 );
 
 =item virtual_lib
@@ -82,7 +82,7 @@ virtual library, 1 = virtual library)
 =cut
 
 has virtual_lib => (
-    is          => q(ro),
+    is          => q(rw),
     isa         => sub { warn "Not a boolean value"
         unless ($_[0] =~ /n|N|0|y|Y|1/) },
     trigger     => sub {
@@ -90,7 +90,7 @@ has virtual_lib => (
                     if ( $_[0] =~ /nN/ ) { return 0; }
                     if ( $_[0] =~ /yY/ ) { return 1; }
     },
-    required    => 1,
+#    required    => 1,
 );
 
 =item load_address
@@ -100,11 +100,9 @@ Address that a shared library will load in to when called by the linker.
 =cut
 
 has load_address => (
-    is          => q(ro),
+    is          => q(rw),
     isa         => sub { $_[0] =~ /^0x[a-fA-F0-9]+$/ },
-    # this is broken on older versions of Moo
-    #default     => q(N/A),
-    default     => sub { return q(N/A) },
+    default     => "N/A",
 );
 
 =back
@@ -156,7 +154,7 @@ for a more "in-depth" explanation.
 
 =cut
 
-sub is_virtual_lib {
+sub is_virutal_lib {
     my $self = shift;
     return $self->virtual_lib();
 }

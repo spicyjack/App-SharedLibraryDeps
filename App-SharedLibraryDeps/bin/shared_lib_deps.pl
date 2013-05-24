@@ -226,6 +226,8 @@ use App::SharedLibraryDeps::Cache;
     # print a nice banner
     $log->info(qq(Starting shared_lib_deps.pl, version $VERSION));
     $log->info(qq(My PID is $$));
+    # need to call Log::Log4perl::Level::to_level to convert the log level
+    # integer constant to "human readable"
     $log->info(qq(Current log level is )
         . Log::Log4perl::Level::to_level($log->level()) );
 
@@ -234,7 +236,11 @@ use App::SharedLibraryDeps::Cache;
         $log->debug(qq(main: Adding file $filename));
         @dependencies = $cache->get_deps(filename => $filename);
         say qq(Dependencies for $filename: );
-        foreach my $dep ( sort(@dependencies) ) {
+        # Use map to enumerate over all of the dependency objects, call the
+        # filename() method on each one, and dump the output into a new array
+        # that can be sorted nicely
+        my @dep_filenames = map($_->filename(), @dependencies);
+        foreach my $dep ( sort(@dep_filenames) ) {
             say qq(- $dep);
         }
     }

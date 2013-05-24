@@ -232,7 +232,7 @@ use App::SharedLibraryDeps::Cache;
     my @dependencies;
     foreach my $filename ( @{$config->get(q(file))} ) {
         $log->debug(qq(main: Adding file $filename));
-        @dependencies = $cache->get_dependencies(filename => $filename);
+        @dependencies = $cache->get_deps(filename => $filename);
         say qq(Dependencies for $filename: );
         foreach my $dep ( sort(@dependencies) ) {
             say qq(- $dep);

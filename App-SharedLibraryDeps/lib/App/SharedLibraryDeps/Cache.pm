@@ -12,14 +12,15 @@ use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 use Moo;
 
 # local modules
-use App::SharedLibraryDeps::File;
+use App::SharedLibraryDeps::BinFile;
+use App::SharedLibraryDeps::LibFile;
 
 # for storing file objects once they've been queried via ld.so
 my %_cache;
 
 =head1 NAME
 
-App::SharedLibraryDeps::Cache - A cache of L<App::SharedLibraryDeps::File>
+App::SharedLibraryDeps::Cache - A cache of L<App::SharedLibraryDeps::LibFile>
 objects.
 
 =head1 VERSION
@@ -34,8 +35,8 @@ our $VERSION = '0.01';
 
     my $filename = q(/path/to/a/binary/or/library);
     use App::SharedLibraryDeps::Cache;
-    my $file = App::SharedLibraryDeps::File->new(filename => $filename);
-    my @deps = $file->get_shared_library_dependencies();
+    my $file = App::SharedLibraryDeps::BinFile->new(filename => $filename);
+    my @deps = $file->get_deps();
     my $cache = App::SharedLibraryDeps::Cache->new();
     $cache->add(file => $file);
     ...
@@ -125,10 +126,10 @@ sub get_deps {
         $file = App::SharedLibraryDeps::BinFile->new(
             filename    => $filename,
         );
-        push(@dependencies, $self->query_file(file => $file));
+        #push(@dependencies, $self->get_deps(filename => $file->filename() ));
     } elsif ( $filename =~ /linux-[gate|vdso].*/ ) {
         $log->debug(qq(Cache->get_deps: $filename is a virtual file));
-        my $file = App::SharedLibraryDeps::LibFile->new(
+        $file = App::SharedLibraryDeps::LibFile->new(
             filename    => $filename,
             virtual_lib => 1,
         );
@@ -141,8 +142,9 @@ sub get_deps {
 
     # query 'ldd'
     my $cmd = q(/usr/bin/ldd ) . $file->filename();
+    # remove PATH from the environment, we don't need it for this
+    delete @ENV{q(PATH)};
     my @ldd_output = qx/$cmd/;
-    my @dependencies;
     chomp(@ldd_output);
     if ( $log->is_debug() ) {
         $log->debug(qq(Dependencies for ) . $file->filename() . q( are:));
@@ -163,7 +165,7 @@ sub get_deps {
             $libname = $1;
             $load_address = $2;
             if ( $libname =~ /linux-vdso|linux-gate/ ) {
-                my $virtual_file = App::SharedLibraryDeps::File->new(
+                my $virtual_file = App::SharedLibraryDeps::LibFile->new(
                     libname         => $libname,
                     filename        => $libname,
                     static_lib      => 0,
@@ -171,26 +173,24 @@ sub get_deps {
                     load_address    => $load_address,
                 );
                 $log->debug(qq(Cache->get_deps: adding virtual file )
-                    . qq('$libname' to return list));
-                push(@dependencies, $libname);
+                    . qq('$libname' to deps list));
+                push(@dependencies, $virtual_file);
                 $self->_add_to_cache(file => $virtual_file);
                 next LDD_LINE;
             } else {
                 $log->debug(qq(Cache->get_deps: adding 2-arg '$ldd_line')
-                    . qq( to return list as filename $libfile));
+                    . qq( to deps list as filename $libfile));
             }
         } elsif ( $ldd_line =~ /^statically linked/ ) {
-            my $static_file = App::SharedLibraryDeps::File->new(
+            my $static_file = App::SharedLibraryDeps::LibFile->new(
                 libname         => $file->filename(),
                 filename        => $file->filename(),
                 static_lib      => 1,
                 virtual_lib     => 0,
             );
             $log->debug(qq(Cache->get_deps: adding static lib ')
-                . $file->filename() . q(' to return list));
-            # do not push anything on dependencies for a statically linked
-            # file; it has no dependencies by design
-            #push(@dependencies, $file);
+                . $file->filename() . q(' to deps list));
+            push(@dependencies, $file);
             $self->_add_to_cache(file => $static_file);
             next LDD_LINE;
         } elsif ( $ldd_line
@@ -199,13 +199,13 @@ sub get_deps {
             $libfile = $2;
             $load_address = $3;
             $log->debug(qq(Cache->get_deps: adding 3-arg '$ldd_line')
-                . qq( to return list as filename $libfile));
+                . qq( to deps list as filename $libfile));
         } elsif ( $ldd_line =~ /^([\/a-zA-Z0-9\-\+_].*) \((0x.*)\)/ ) {
             $libname = $1;
             $libfile = $libname;
             $load_address = $2;
             $log->debug(qq(Cache->get_deps: adding simple 2 arg '$ldd_line')
-                . q( to return list as ) . $1);
+                . q( to deps list as ) . $1);
         } else {
             $log->logdie(q(Cache->get_deps: )
                 . qq(Can't determine dependency info for $ldd_line));
@@ -226,7 +226,7 @@ sub get_deps {
             #}
             my $file_obj;
             if ( defined $load_address ) {
-                $file_obj = App::SharedLibraryDeps::File->new(
+                $file_obj = App::SharedLibraryDeps::LibFile->new(
                     libname         => $libname,
                     filename        => $libfile,
                     static_lib      => $static_lib,
@@ -234,7 +234,7 @@ sub get_deps {
                     virtual_lib     => $virtual_lib,
                 );
             } else {
-                $file_obj = App::SharedLibraryDeps::File->new(
+                $file_obj = App::SharedLibraryDeps::LibFile->new(
                     libname         => $libname,
                     filename        => $libfile,
                     static_lib      => $static_lib,
@@ -253,7 +253,7 @@ sub get_deps {
         . q( has ) . scalar(@dependencies) . q( dependencies));
     $log->debug(qq(Cache->get_deps: dependencies for ) . $file->filename());
     foreach my $dep ( sort(@dependencies) ) {
-        $log->debug(qq( - $dep));
+        $log->debug( q( - ) . $dep->filename() );
     }
     return @dependencies;
 }
@@ -288,8 +288,8 @@ sub _normalize_filename {
 
 =head2 _add_to_cache(file => $file)
 
-Adds the L<App::SharedLibraryDeps::File> object passed in as C<$file> to the
-cache.
+Adds the L<App::SharedLibraryDeps::LibFile> object passed in as C<$file> to
+the cache.
 
 =cut
 
@@ -304,14 +304,15 @@ sub _add_to_cache {
     my $file = $args{file};
     die q(Cache->_add_to_cache: file to add to Cache is not a File object)
         unless (ref($file));
-    $log->debug(q(Cache->_add_to_cache; checking filename ')
-        . $file->filename() . q('));
+
+    $log->debug(q(Cache->_add_to_cache; checking if ')
+        . $file->libname() . q(' already exists in cache));
     if ( exists $_cache{$file->filename()} ) {
-        $log->info(q(Cache->_add_to_cache; ) . $file->filename()
+        $log->info(q(Cache->_add_to_cache; ) . $file->libname()
             . q( already exists in cache!));
         $return_value = undef;
     } else {
-        $log->info(q(Cache->_add_to_cache; added ) . $file->filename()
+        $log->info(q(Cache->_add_to_cache; added ) . $file->libname()
             . q( to cache));
         $_cache{$file->filename()} = $file;
         $return_value = 1;

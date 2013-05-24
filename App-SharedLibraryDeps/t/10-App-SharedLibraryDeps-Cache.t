@@ -1,6 +1,6 @@
 #!perl -T
 
-use Test::More tests => 7;
+use Test::More tests => 8;
 #use Test::More;
 use Test::File;
 
@@ -29,8 +29,14 @@ my $cache = App::SharedLibraryDeps::Cache->new();
 isa_ok($cache, q(App::SharedLibraryDeps::Cache));
 
 # test $cache->dependencies
-my @test = $cache->get_dependencies(filename => undef);
-ok(scalar(@test) == 0, q(get_dependencies with 'undef' for filename returns )
+my @test = $cache->get_deps(filename => undef);
+ok(scalar(@test) == 0, q(get_deps with 'undef' for filename returns )
     . q(empty list));
+
+# mount is a good candidate for testing; we just want to see if get_deps
+# returns a non-zero value, not an exact number
+@test = $cache->get_deps(filename => q(/bin/mount));
+ok(scalar(@test) > 0, q(get_deps with '/bin/mount' returned )
+    . scalar(@test) . q( dependencies));
 
 done_testing();

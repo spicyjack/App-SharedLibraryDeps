@@ -35,9 +35,10 @@ our $VERSION = '0.01';
 
     my $filename = q(/path/to/a/binary/or/library);
     use App::SharedLibraryDeps::Cache;
-    my $file = App::SharedLibraryDeps::BinFile->new(filename => $filename);
-    my @deps = $file->get_deps();
+    use App::SharedLibraryDeps::BinFile;
     my $cache = App::SharedLibraryDeps::Cache->new();
+    my $file = App::SharedLibraryDeps::BinFile->new(filename => $filename);
+    my @deps = $cache->get_deps(file => $file);
     $cache->add(file => $file);
     ...
 
@@ -105,7 +106,7 @@ sub get_deps {
     my $log = get_logger("");
 
     # sort and return_type are optional
-    die q|Missing filename (filename => $file)|
+    die q|Missing filename argument (filename => $filename)|
         unless ( exists $args{filename} );
 
     my $filename = $args{filename};
@@ -147,7 +148,8 @@ sub get_deps {
     my @ldd_output = qx/$cmd/;
     chomp(@ldd_output);
     if ( $log->is_debug() ) {
-        $log->debug(qq(Dependencies for ) . $file->filename() . q( are:));
+        $log->debug(qq(Dependencies found my 'ldd' for )
+            . $file->filename() . q( are:));
         foreach my $line ( @ldd_output ) {
             $line =~ s/^\s+//g;
             $log->debug(qq(  - $line));

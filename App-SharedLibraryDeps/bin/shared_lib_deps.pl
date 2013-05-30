@@ -215,7 +215,7 @@ use App::SharedLibraryDeps::Cache;
         . qq(log4perl.appender.Screen.utf8 = 1\n)
         . qq(log4perl.appender.Screen.layout = PatternLayout\n)
         . q(log4perl.appender.Screen.layout.ConversionPattern )
-        . qq(= %d{HH.mm.ss} %p L:%L -> %m%n\n);
+        . qq(= %d{HH.mm.ss} %p %L:%m%n\n);
     # create a logger object, and prime the logfile for this session
     Log::Log4perl::init( \$log_conf );
     my $log = get_logger("");
@@ -242,6 +242,13 @@ use App::SharedLibraryDeps::Cache;
         my @dep_filenames = map($_->filename(), @dependencies);
         foreach my $dep ( sort(@dep_filenames) ) {
             say qq(- $dep);
+        }
+
+        use Data::Dumper;
+        foreach my $cache_file ( $cache->get_all_cached_files() ) {
+            say q(This file is: ) . $cache_file->filename();
+            say Dumper { $cache_file->get_deps() };
+            say Dumper { $cache_file->get_reverse_deps() };
         }
     }
 

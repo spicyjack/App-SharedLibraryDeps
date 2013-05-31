@@ -1,10 +1,10 @@
 package App::SharedLibraryDeps::Roles::File;
 
-use warnings;
 use strict;
+use warnings;
+use 5.010;
 use Moo::Role;
-
-my (%_deps, %_reverse_deps);
+use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 
 =head1 NAME
 
@@ -29,6 +29,101 @@ our $VERSION = '0.01';
     my @deps = $file->get_shared_library_dependencies();
     ...
 
+=head1 OBJECT METHODS
+
+=head2 add_dep($dep)
+
+Accepts an L<App::SharedLibraryDeps::BinFile> or
+L<App::SharedLibraryDeps::LibFile> object, and adds that object as a dependency
+for this file object.  Returns the current dependencies hash for this L<File>
+object.
+
+=cut
+
+sub add_dep {
+    my $self = shift;
+    my $dep = shift;
+    my $log = get_logger("");
+
+    use Data::Dumper;
+    my %deps;
+    $log->debug(q(File->add_dep: adding dependency ) . $dep->hashname()
+        . q( to ) . $self->hashname());
+    if ( defined $self->_deps() ) {
+        $log->debug("File->add_dep: regurgitated deps for "
+            . $self->shortname() . " are:");
+        %deps = %{$self->_deps()};
+        $log->debug(Dumper {%deps});
+    }
+    $deps{$dep->filename()}++;
+    $log->debug("File->add_dep: deps for " . $self->shortname() . " are now:");
+    $log->debug(Dumper {%deps});
+    $self->_deps(\%deps);
+    my %return = %deps;
+    return %return;
+}
+
+=head2 get_deps()
+
+Returns a hash containing the dependencies of this file, along with their "hit
+counts", or how many times that file is referenced by another file in the
+cache.
+
+=cut
+
+sub get_deps {
+    my $self = shift;
+    my %return = %{$self->_deps()};
+    return %return;
+}
+
+=head2 add_reverse_dep($dep)
+
+Accepts an L<App::SharedLibraryDeps::BinFile> or
+L<App::SharedLibraryDeps::LibFile> object, and adds that object as a "reverse
+dependency" for this file object.  Returns the current dependencies hash for
+this L<File> object.
+
+=cut
+
+sub add_reverse_dep {
+    my $self = shift;
+    my $dep = shift;
+    my $log = get_logger("");
+
+    use Data::Dumper;
+    my %rev_deps;
+    $log->debug(q(File->add_reverse_dep: adding reverse dependency )
+        . $dep->hashname() . q( to ) . $self->hashname());
+    if ( defined $self->_reverse_deps() ) {
+        $log->debug("File->add_reverse_dep: regurgitated reverse deps for "
+            . $self->shortname() . " are:");
+        %rev_deps = %{$self->_reverse_deps()};
+        $log->debug(Dumper {%rev_deps});
+    }
+    $rev_deps{$dep->filename()}++;
+    $log->debug("File->add_reverse_dep: reverse deps for "
+        . $self->shortname() . " are now:");
+    $log->debug(Dumper {%rev_deps});
+    $self->_reverse_deps(\%rev_deps);
+    my %return = %rev_deps;
+    return %return;
+}
+
+=head2 get_reverse_deps()
+
+Returns a hash containing the "reverse dependencies" of this file, along with
+their "hit counts", or how many times that file is referenced by another file
+in the cache.
+
+=cut
+
+sub get_reverse_deps {
+    my $self = shift;
+    my %return = %{$self->_reverse_deps()};
+    return %return;
+}
+
 =head1 OBJECT ATTRIBUTES
 
 =over
@@ -45,37 +140,69 @@ has filename => (
     # or the kernel virtual stub file
     isa         => sub { -r $_[0] || $_[0] =~ /linux-[vdso|gate]/ },
     required    => 1,
+    trigger     => sub {
+                    my $self = shift;
+                    my $arg = shift;
+                    # XXX *NIX specific path
+                    my @path = split(q(/), $arg);
+                    $self->shortname($path[-1]);
+                    my $hashname = $self;
+                    $hashname =~ s/.*(\(0x[0-9a-f]+\))$/$1/;
+                    $self->hashname($path[-1] . qq( $hashname));
+    },
 );
 
-=head1 OBJECT METHODS
+=item shortname
 
-=head2 add_dep($dep)
+The file name of the file on the filesystem.  This attribute is updated when
+the C<filename> attribute (above) is set.
 
-Accepts an L<App::SharedLibraryDeps::BinFile> or
-L<App::SharedLibraryDeps::LibFile> object, and adds that object as a dependency
-for this file object.
-
-=cut
-
-sub add_dep {
-    my $self = shift;
-    my $dep = shift;
-    $_deps{$dep->filename()}++;
-}
-
-=head2 add_reverse_dep($dep)
-
-Accepts an L<App::SharedLibraryDeps::BinFile> or
-L<App::SharedLibraryDeps::LibFile> object, and adds that object as a "reverse
-dependency" for this file object.
+=back
 
 =cut
 
-sub add_reverse_dep {
-    my $self = shift;
-    my $dep = shift;
-    $_reverse_deps{$dep->filename()}++;
-}
+has shortname => (
+    is          => q(rw),
+);
+
+=item hashname
+
+A combination of C<shortname> plus the memory location of the object within
+Perl.  Used for debugging the possibility of multiple objects for the same
+file in a dependency/reverse dependency list somewhere.  This attribute is
+updated when the C<filename> attribute (above) is set.
+
+=back
+
+=cut
+
+has hashname => (
+    is          => q(rw),
+);
+
+has _deps => (
+    is          => q(rw),
+    isa         => sub {
+                    if ( ref($_[0]) eq q(HASH) ) {
+                        return 1;
+                    } else {
+                        warn q(File->_deps: received non-HASH value);
+                        return 0;
+                    }
+    },
+);
+
+has _reverse_deps => (
+    is          => q(rw),
+    isa         => sub {
+                    if ( ref($_[0]) eq q(HASH) ) {
+                        return 1;
+                    } else {
+                        warn q(File->_reverse_deps: received non-HASH value);
+                        return 0;
+                    }
+    },
+);
 
 =head1 AUTHOR
 

@@ -245,9 +245,13 @@ use App::SharedLibraryDeps::Cache;
         }
 
         use Data::Dumper;
+        $Data::Dumper::Indent = 1;
+        $Data::Dumper::Sortkeys = 1;
+        $Data::Dumper::Terse = 1;
         foreach my $cache_file ( $cache->get_all_cached_files() ) {
-            say q(This file is: ) . $cache_file->filename();
+            say q(Dumping deps for: ) . $cache_file->filename();
             say Dumper { $cache_file->get_deps() };
+            say q(Dumping reverse deps for: ) . $cache_file->filename();
             say Dumper { $cache_file->get_reverse_deps() };
         }
     }

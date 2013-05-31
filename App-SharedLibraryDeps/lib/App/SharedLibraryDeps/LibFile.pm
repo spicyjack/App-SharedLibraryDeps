@@ -58,9 +58,11 @@ has static_lib => (
     isa         => sub { warn "Not a boolean value"
         unless ($_[0] =~ /n|N|0|y|Y|1/) },
     trigger     => sub {
+                    my $self = shift;
+                    my $arg = shift;
                     # reset the value of static_lib if it's /nNyY/
-                    if ( $_[0] =~ /nN/ ) { return 0; }
-                    if ( $_[0] =~ /yY/ ) { return 1; }
+                    if ( $arg =~ /nN/ ) { $self->static_lib(0); }
+                    if ( $arg =~ /yY/ ) { $self->static_lib(1); }
     },
 #    required    => 1,
 );
@@ -77,9 +79,11 @@ has virtual_lib => (
     isa         => sub { warn "Not a boolean value"
         unless ($_[0] =~ /n|N|0|y|Y|1/) },
     trigger     => sub {
+                    my $self = shift;
+                    my $arg = shift;
                     # reset the value of static_lib if it's /nNyY/
-                    if ( $_[0] =~ /nN/ ) { return 0; }
-                    if ( $_[0] =~ /yY/ ) { return 1; }
+                    if ( $arg =~ /nN/ ) { $self->virtual_lib(0); }
+                    if ( $arg =~ /yY/ ) { $self->virtual_lib(1); }
     },
 #    required    => 1,
 );

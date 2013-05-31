@@ -3,6 +3,9 @@ package App::SharedLibraryDeps::Roles::File;
 use strict;
 use warnings;
 use 5.010;
+use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Terse = 1;
 use Moo::Role;
 use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 
@@ -45,7 +48,6 @@ sub add_dep {
     my $dep = shift;
     my $log = get_logger("");
 
-    use Data::Dumper;
     my %deps;
     $log->debug(q(File->add_dep: adding dependency ) . $dep->hashname()
         . q( to ) . $self->hashname());
@@ -91,7 +93,6 @@ sub add_reverse_dep {
     my $dep = shift;
     my $log = get_logger("");
 
-    use Data::Dumper;
     my %rev_deps;
     $log->debug(q(File->add_reverse_dep: adding reverse dependency )
         . $dep->hashname() . q( to ) . $self->hashname());

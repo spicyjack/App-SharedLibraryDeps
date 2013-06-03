@@ -109,16 +109,15 @@ sub get_deps {
     if ( $args{recurse} ) {
         # this should already be a File object
         $file = $args{recurse};
-        $log->debug(q(Cache->get_deps: Recursed with ) . $file->hashname());
+        $log->debug(q(Recursed with ) . $file->hashname());
     } elsif ( $args{filename} ) {
         $filename = $args{filename};
         if ( ! defined $filename ) {
-            $log->warn(q|Cache->get_deps; 'filename' argument undefined|);
+            $log->warn(q('filename' argument undefined));
             return ();
         }
         if ( -r $filename ) {
-            $log->debug(q(Cache->get_deps: file )
-                . $filename . q( is readable));
+            $log->debug(qq(File '$filename' is readable));
             # @file_dependencies can be checked to see if the file has already
             # been cached or not
             $file = App::SharedLibraryDeps::BinFile->new(
@@ -127,15 +126,14 @@ sub get_deps {
             #push(@dependencies,
             #$self->get_deps(filename => $file->filename() ));
         } elsif ( $filename =~ /linux-[gate|vdso].*/ ) {
-            $log->debug(qq(Cache->get_deps: $filename is a virtual file));
+            $log->debug(qq($filename is a virtual file));
             $file = App::SharedLibraryDeps::LibFile->new(
                 filename    => $filename,
                 virtual_lib => 1,
             );
             #push(@dependencies, $self->query_file(file => $file));
         } else {
-            $log->warn("Cache->get_deps: " . $filename
-                . " is *not* readable");
+            $log->warn($filename . q( is *not* readable));
             return ();
         }
     } else {
@@ -177,13 +175,12 @@ sub get_deps {
                     virtual_lib     => 1,
                     load_address    => $load_address,
                 );
-                $log->debug(qq(Cache->get_deps: adding virtual file )
-                    . qq('$libname' to deps list));
+                $log->debug(qq(Adding virtual file '$libname' to deps list));
                 #push(@dependencies, $virtual_file);
                 $self->_add_to_cache(file => $virtual_file);
                 #next LDD_LINE;
             } else {
-                $log->debug(qq(Cache->get_deps: adding 2-arg '$ldd_line')
+                $log->debug(qq(Adding 2-arg '$ldd_line')
                     . qq( to deps list as '$libfile'));
             }
         } elsif ( $ldd_line =~ /^statically linked/ ) {
@@ -195,8 +192,7 @@ sub get_deps {
                 static_lib      => 1,
                 virtual_lib     => 0,
             );
-            $log->debug(qq(Cache->get_deps: adding static lib ')
-                . $libname. q(' to deps list));
+            $log->debug(qq(Adding static lib '$libname' to deps list));
             #push(@dependencies, $file);
             $self->_add_to_cache(file => $static_file);
             #next LDD_LINE;
@@ -205,24 +201,23 @@ sub get_deps {
             $libname = $1;
             $libfile = $2;
             $load_address = $3;
-            $log->debug(qq(Cache->get_deps: adding 3-arg '$ldd_line')
+            $log->debug(qq(Adding 3-arg '$ldd_line')
                 . qq( to deps list as '$libfile'));
         } elsif ( $ldd_line =~ /^([\/a-zA-Z0-9\-\+_].*) \((0x.*)\)/ ) {
             $libname = $1;
             $libfile = $libname;
             $load_address = $2;
-            $log->debug(qq(Cache->get_deps: adding simple 2 arg '$ldd_line')
+            $log->debug(qq(Adding simple 2 arg '$ldd_line')
                 . q( to deps list as ') . $1 . q('));
             # FIXME check here to see if this library is already cached; if
             # so, don't add it
         } else {
-            $log->logdie(q(Cache->get_deps: )
-                . qq(Can't determine dependency info for $ldd_line));
+            $log->logdie(qq(Can't determine dependency info for $ldd_line));
         }
 
         # this will retrieve the file object from the cache, if the file
         # object has already been added to the cache
-        $log->debug(qq(Cache->get_deps: Checking for $libfile in cache));
+        $log->debug(qq(Checking for $libfile in cache));
         my $dep_obj = $self->_get_from_cache(filename => $libfile);
         if ( ! defined $dep_obj ) {
             if ( defined $load_address ) {
@@ -241,10 +236,9 @@ sub get_deps {
                     virtual_lib     => $virtual_lib,
                 );
             }
-            $log->info(qq(Cache->get_deps: recursing with ')
-                . $dep_obj->shortname() . q('));
+            $log->info(qq(Recursing with ') . $dep_obj->shortname() . q('));
             $self->get_deps( recurse => $dep_obj );
-            $log->info(q(Cache->get_deps: Adding ) . $dep_obj->filename()
+            $log->info(q(Adding ) . $dep_obj->filename()
                 . q( to cache and dependencies));
             $self->_add_to_cache(file => $dep_obj);
             #push(@dependencies, $dep_obj);
@@ -253,18 +247,18 @@ sub get_deps {
         # the cache file's reverse dependency
 
         if ( $file->filename() ne $dep_obj->filename() ) {
-            $log->info(qq(Cache->get_deps: Adding ) . $dep_obj->filename()
+            $log->info(qq(Adding ) . $dep_obj->filename()
                 . qq( to dependencies for ) . $file->filename());
             push(@dependencies, $dep_obj);
             $file->add_dep($dep_obj);
             $dep_obj->add_reverse_dep($file);
         } else {
-            $log->debug(qq(Cache->get_deps: Can't add dependencies to self;)
-                . qq( shortname: ) . $file->shortname());
+            $log->debug(qq(Can't add dependencies to self; shortname: )
+                . $file->shortname());
         }
     }
-    $log->info(qq(Cache->get_deps: returning; ) . $file->filename()
-        . q( has ) . scalar(@dependencies) . q( dependencies));
+    $log->info(qq(Returning; ) . $file->filename() . q( has )
+        . scalar(@dependencies) . q( dependencies));
 
     return @dependencies;
 }
@@ -281,18 +275,17 @@ sub _normalize_filename {
     my %args = @_;
     my $log = get_logger("");
 
-    die q(Cache->_normalize_filename: missing 'file' argument)
+    die q(Missing 'file' argument)
         unless (exists $args{file});
 
     #cluck(q(_normalize_filename: entering method));
     #warn Dumper {%args};
     if ( ref($args{file}) ) {
         my $file_obj = $args{file};
-        $log->debug(q(Cache->_normalize_filename: object: )
-            . $file_obj->filename());
+        $log->debug(q(Object: ) . $file_obj->filename());
         return $file_obj->filename();
     } else {
-        $log->debug(q(Cache->_normalize_filename: file: ) . $args{file});
+        $log->debug(q(File: ) . $args{file});
         return $args{file};
     }
 }
@@ -310,21 +303,19 @@ sub _add_to_cache {
     my $log = get_logger("");
 
     my $return_value;
-    die q(Cache->_add_to_cache: missing 'file' argument)
+    die q(Missing 'file' argument)
         unless (exists $args{file});
     my $file = $args{file};
-    die q(Cache->_add_to_cache: file to add to Cache is not a File object)
+    die q(File to add to Cache is not a File object)
         unless (ref($file));
 
-    $log->debug(q(Cache->_add_to_cache; checking if ')
-        . $file->libname() . q(' already exists in cache));
+    $log->debug(q(Checking if ') . $file->libname()
+        . q(' already exists in cache));
     if ( exists $_cache{$file->filename()} ) {
-        $log->info(q(Cache->_add_to_cache; ) . $file->libname()
-            . q( already exists in cache!));
+        $log->info($file->libname() . q( already exists in cache!));
         $return_value = undef;
     } else {
-        $log->info(q(Cache->_add_to_cache; added ) . $file->libname()
-            . q( to cache));
+        $log->info(q(Added ) . $file->libname() . q( to cache));
         $_cache{$file->filename()} = $file;
         $return_value = 1;
     }
@@ -345,14 +336,14 @@ sub _get_from_cache {
     my %args = @_;
     my $log = get_logger("");
 
-    die q(Cache->_get_from_cache: missing 'filename' argument)
+    die q(Missing 'filename' argument)
         unless (exists $args{filename});
     my $filename = $args{filename};
     if ( exists $_cache{$filename} ) {
-        $log->debug(qq(Cache->_get_from_cache: $filename exists in cache));
+        $log->debug(qq($filename exists in cache));
         return $_cache{$filename};
     } else {
-        $log->debug(q(Cache->_get_from_cache: file doesn't exist in cache));
+        $log->debug(q(File doesn't exist in cache));
         return undef;
     }
 }
@@ -375,6 +366,9 @@ sub get_all_cached_files {
     foreach my $key ( sort(keys(%_cache)) ) {
         push(@cached_files, $_cache{$key});
     }
+    $log->debug(q(Returning all cached files; ) . scalar(@cached_files)
+        . q( files currently in cache));
+
     return @cached_files;
 }
 

@@ -215,7 +215,7 @@ use App::SharedLibraryDeps::Cache;
         . qq(log4perl.appender.Screen.utf8 = 1\n)
         . qq(log4perl.appender.Screen.layout = PatternLayout\n)
         . q(log4perl.appender.Screen.layout.ConversionPattern )
-        . qq(= %d{HH.mm.ss} %p %L:%m%n\n);
+        . qq|= %d{HH.mm.ss} %p %F{1}:%L (%M{1}) %m%n\n|;
     # create a logger object, and prime the logfile for this session
     Log::Log4perl::init( \$log_conf );
     my $log = get_logger("");
@@ -233,7 +233,7 @@ use App::SharedLibraryDeps::Cache;
 
     my @dependencies;
     foreach my $filename ( @{$config->get(q(file))} ) {
-        $log->debug(qq(main: Adding file $filename));
+        $log->debug(qq(Adding file $filename));
         @dependencies = $cache->get_deps(filename => $filename);
         say qq(Dependencies for $filename: );
         # Use map to enumerate over all of the dependency objects, call the

@@ -4,10 +4,10 @@ Given one or more dynamically linked binary files or libraries, calculate the
 dependencіes of those files recursively, so that a list of files required to
 run the original binaries or libraries can be generated.
 
-## Todos ##
+# Todos #
 - Generate this README or the regular docs from POD
 
-## Installation ##
+# INSTALLATION #
 
 To install this module, run the following commands:
 
@@ -15,6 +15,11 @@ To install this module, run the following commands:
 	  make
 	  make test
 	  make install
+
+# USAGE #
+
+    perl shared_lib_deps.pl --http-user=foo --http-pass=bar \
+    --url https://example.com/jenkins/job/chocolate-doom --verbose
 
 ## Support and Documentation ##
 

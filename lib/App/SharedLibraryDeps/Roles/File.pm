@@ -3,11 +3,12 @@ package App::SharedLibraryDeps::Roles::File;
 use strict;
 use warnings;
 use 5.010;
+use File::stat;
+use Log::Log4perl qw(get_logger :no_extra_logdie_message);
+use Moo::Role;
 use Data::Dumper;
 $Data::Dumper::Sortkeys = 1;
 $Data::Dumper::Terse = 1;
-use Moo::Role;
-use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 
 =head1 NAME
 
@@ -150,6 +151,19 @@ has filename => (
                     $hashname =~ s/.*(\(0x[0-9a-f]+\))$/$1/;
                     $self->hashname($path[-1] . qq( $hashname));
     },
+);
+
+=item filestat
+
+A L<File::stat> object that represents the C<stat()> attributes for the file
+that this object represents.
+
+=back
+
+=cut
+
+has filestat => (
+    is          => q(rw),
 );
 
 =item shortname

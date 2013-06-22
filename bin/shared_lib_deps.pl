@@ -184,11 +184,21 @@ use warnings;
 
 # Perl core modules
 use Carp;
+use File::Basename;
 use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 use Log::Log4perl::Level;
+use Time::HiRes qw(gettimeofday tv_interval);
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
+$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Terse = 1;
+
 
 # Project modules
 use App::SharedLibraryDeps::Cache;
+
+    my $script_start_time = [gettimeofday];
+    our $my_name = basename $0;
 
     my $config = App::SharedLibraryDeps::Config->new();
     my $cache = App::SharedLibraryDeps::Cache->new();
@@ -220,15 +230,17 @@ use App::SharedLibraryDeps::Cache;
     Log::Log4perl::init( \$log_conf );
     my $log = get_logger("");
 
-    $log->logdie(qq|Missing '--file' argument(s)|)
-        unless ( defined $config->get(q(file)) );
+    if ( ! defined $config->get(q(file)) ) {
+        $log->fatal(q|Use '--file' argument(s) to discover file dependencies|);
+        $log->logdie(qq|'$my_name --help' to see script usage and options|);
+    }
 
     # print a nice banner
-    $log->info(qq(Starting shared_lib_deps.pl, version $VERSION));
-    $log->info(qq(My PID is $$));
+    $log->info(qq($my_name: Starting... version $VERSION));
+    $log->info(qq($my_name: My PID is $$));
     # need to call Log::Log4perl::Level::to_level to convert the log level
     # integer constant to "human readable"
-    $log->info(qq(Current log level is )
+    $log->info(qq($my_name: Current log level is )
         . Log::Log4perl::Level::to_level($log->level()) );
 
     my @dependencies;
@@ -255,6 +267,10 @@ use App::SharedLibraryDeps::Cache;
             say Dumper { $cache_file->get_reverse_deps() };
         }
     }
+    $log->info(qq($my_name: Parsed dependencies for )
+        . scalar(@{$config->get(q(file))}) . q( files));
+    $log->info(qq($my_name: in ) . sprintf(q(%0.1f),
+        tv_interval($script_start_time, [gettimeofday])) . q( seconds));
 
 =cut
 

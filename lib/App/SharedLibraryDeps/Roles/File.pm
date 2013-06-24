@@ -76,8 +76,13 @@ cache.
 
 sub get_deps {
     my $self = shift;
-    my %return = %{$self->_deps()};
-    return %return;
+
+    if ( defined $self->_deps() ) {
+        my %return = %{$self->_deps()};
+        return %return;
+    } else {
+        return ();
+    }
 }
 
 =head2 add_reverse_dep($dep)

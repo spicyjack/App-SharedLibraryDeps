@@ -52,13 +52,13 @@ sub add_dep {
     my %deps;
     $log->debug(q(Adding dependency ) . $dep->hashname()
         . q( to ) . $self->hashname());
-    if ( defined $self->_deps() ) {
+    if ( defined $self->_deps ) {
         $log->debug(q(Regurgitated deps for ') . $self->shortname()
             . q(' are:));
-        %deps = %{$self->_deps()};
+        %deps = %{$self->_deps};
         $log->debug(Dumper {%deps});
     }
-    $deps{$dep->filename()}++;
+    $deps{$dep->filename}++;
     $log->debug(q(Deps for ') . $self->shortname() . q(' are now:));
     $log->debug(Dumper {%deps});
     $self->_deps(\%deps);
@@ -68,20 +68,35 @@ sub add_dep {
 
 =head2 get_deps()
 
-Returns a hash containing the dependencies of this file, along with their "hit
-counts", or how many times that file is referenced by another file in the
-cache.
+Returns an array containing the filenames of files that are dependencies of
+this file.
 
 =cut
 
 sub get_deps {
     my $self = shift;
 
-    if ( defined $self->_deps() ) {
-        my %return = %{$self->_deps()};
-        return %return;
+    if ( defined $self->_deps ) {
+        my %return = %{$self->_deps};
+        return sort(keys(%return));
     } else {
         return ();
+    }
+}
+
+=head2 get_deps_count()
+
+Returns the number of dependencies that this file has.
+
+=cut
+
+sub get_deps_count {
+    my $self = shift;
+
+    if ( defined $self->_deps ) {
+        return scalar(keys(%{$self->_deps}));
+    } else {
+        return 0;
     }
 }
 
@@ -102,13 +117,13 @@ sub add_reverse_dep {
     my %rev_deps;
     $log->debug(q(Adding reverse dependency ) . $dep->hashname()
         . q( to ) . $self->hashname());
-    if ( defined $self->_reverse_deps() ) {
+    if ( defined $self->_reverse_deps ) {
         $log->debug(q(regurgitated reverse deps for ') . $self->shortname()
             . q(' are:));
-        %rev_deps = %{$self->_reverse_deps()};
+        %rev_deps = %{$self->_reverse_deps};
         $log->debug(Dumper {%rev_deps});
     }
-    $rev_deps{$dep->filename()}++;
+    $rev_deps{$dep->filename}++;
     $log->debug(q(reverse deps for ') . $self->shortname() . q(' are now:));
     $log->debug(Dumper {%rev_deps});
     $self->_reverse_deps(\%rev_deps);
@@ -126,8 +141,25 @@ in the cache.
 
 sub get_reverse_deps {
     my $self = shift;
-    my %return = %{$self->_reverse_deps()};
-    return %return;
+    my %return = %{$self->_reverse_deps};
+    return sort(keys(%return));
+}
+
+=head2 get_reverse_deps_count()
+
+Returns the number of "reverse" dependencies (files that depend on this file)
+that this file has.
+
+=cut
+
+sub get_reverse_deps_count {
+    my $self = shift;
+
+    if ( defined $self->_deps ) {
+        return scalar(keys(%{$self->_reverse_deps}));
+    } else {
+        return 0;
+    }
 }
 
 =head1 OBJECT ATTRIBUTES

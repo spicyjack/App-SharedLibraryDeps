@@ -256,15 +256,23 @@ use App::SharedLibraryDeps::Cache;
             say qq(- $dep);
         }
 
-        use Data::Dumper;
-        $Data::Dumper::Indent = 1;
-        $Data::Dumper::Sortkeys = 1;
-        $Data::Dumper::Terse = 1;
-        foreach my $cache_file ( $cache->get_all_cached_files() ) {
-            say q(Dumping deps for: ) . $cache_file->filename();
-            say Dumper { $cache_file->get_deps() };
-            say q(Dumping reverse deps for: ) . $cache_file->filename();
-            say Dumper { $cache_file->get_reverse_deps() };
+        if ( $log->is_info ) {
+            use Data::Dumper;
+            $Data::Dumper::Indent = 1;
+            $Data::Dumper::Sortkeys = 1;
+            $Data::Dumper::Terse = 1;
+            foreach my $cache_file ( sort($cache->get_all_cached_files()) ) {
+                $log->info(q(Dumping ) . $cache_file->get_deps_count()
+                    . q( deps for: ) . $cache_file->filename);
+                foreach my $dep ($cache_file->get_deps()) {
+                    $log->info( q( - ) . $dep );
+                }
+                $log->info(q(Dumping ) . $cache_file->get_reverse_deps_count()
+                    . q( reverse deps for: ) . $cache_file->filename);
+                foreach my $rev_dep ( $cache_file->get_reverse_deps() ) {
+                    $log->info( q( - ) . $rev_dep );
+                }
+            }
         }
     }
     $log->info(qq($my_name: Parsed dependencies for )

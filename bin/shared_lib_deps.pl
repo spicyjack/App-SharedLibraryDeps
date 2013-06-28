@@ -302,11 +302,10 @@ use App::SharedLibraryDeps::Cache;
                 say qq(- ) . $dep->filename;
             } else {
                 my $mangled_filename = $dep->filename;
-                $mangled_filename =~ s!.*([games|bin|lib])$!/usr/$1!;
+                $mangled_filename =~ s!.*/artifacts/(.*)$!/usr/$1!;
                 my $stat = $dep->filestat;
                 say qq(file ) . $dep->filename . q( ) . $mangled_filename
-                    . q( ) . $stat->mode . q( ) . $stat->uid
-                    . q( ) . $stat->gid;
+                    . q( ) . sprintf(q(%04o), $stat->mode & 07777) . q( 0 0);
             }
         }
     }

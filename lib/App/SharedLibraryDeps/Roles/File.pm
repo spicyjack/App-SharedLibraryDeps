@@ -66,7 +66,7 @@ sub add_dep {
     return %return;
 }
 
-=head2 get_deps()
+=head2 get_deps( )
 
 Returns an array containing the filenames of files that are dependencies of
 this file.
@@ -84,7 +84,8 @@ sub get_deps {
     }
 }
 
-=head2 get_deps_count()
+
+=head2 get_deps_count( )
 
 Returns the number of dependencies that this file has.
 
@@ -131,7 +132,7 @@ sub add_reverse_dep {
     return %return;
 }
 
-=head2 get_reverse_deps()
+=head2 get_reverse_deps( )
 
 Returns a hash containing the "reverse dependencies" of this file, along with
 their "hit counts", or how many times that file is referenced by another file
@@ -145,7 +146,7 @@ sub get_reverse_deps {
     return sort(keys(%return));
 }
 
-=head2 get_reverse_deps_count()
+=head2 get_reverse_deps_count( )
 
 Returns the number of "reverse" dependencies (files that depend on this file)
 that this file has.
@@ -179,14 +180,18 @@ has filename => (
     isa         => sub { -r $_[0] || $_[0] =~ /linux-[vdso|gate]/ },
     required    => 1,
     trigger     => sub {
-                    my $self = shift;
-                    my $arg = shift;
-                    # XXX *NIX specific path
-                    my @path = split(q(/), $arg);
-                    $self->shortname($path[-1]);
-                    my $hashname = $self;
-                    $hashname =~ s/.*(\(0x[0-9a-f]+\))$/$1/;
-                    $self->hashname($path[-1] . qq( $hashname));
+        my $self = shift;
+        my $filename = shift;
+        # XXX *NIX specific path
+        my @path = split(q(/), $filename);
+        $self->shortname($path[-1]);
+        # assinging from $self assigns the reference string which contains the
+        # memory address that Perl is using for this object
+        my $hashname = $self;
+        $hashname =~ s/.*(\(0x[0-9a-f]+\))$/$1/;
+        $self->hashname($path[-1] . qq( $hashname));
+        my $stat = stat($filename);
+        $self->filestat($stat);
     },
 );
 

@@ -29,7 +29,8 @@ our $VERSION = '0.01';
 
  Other script options:
  -f|--file          Discover dependencies for these files
- -o|--output        Output dependencies as a filelist (for 'gen_init_cpio')
+ -o|--output        Output file; default: STDOUT
+ -p|--plaintext     Output plaintext filelist (default: initramfs filelist)
 
  Example usage:
 
@@ -49,11 +50,7 @@ our @options = (
     # other options
     q(file|f=s@),
     q(output|o=s),
-    # FIXME
-    # - type of output
-    #   - plain formatted list
-    #   - kernel 'gen_init_cpio' filelist
-    #   - combination (report)
+    q(plaintext|p),
 );
 
 =head1 DESCRIPTION
@@ -174,6 +171,28 @@ sub get_args {
     return %{$self->{_args}};
 } # get_args
 
+=item defined($key)
+
+Returns "true" (C<1>) if the value for the key passed in as C<key> is
+C<defined>, and "false" (C<0>) if the value is undefined, or the key doesn't
+exist.
+
+=cut
+
+sub defined {
+    my $self = shift;
+    my $key = shift;
+    # turn the args reference back into a hash with a copy
+    my %args = %{$self->{_args}};
+
+    if ( exists $args{$key} ) {
+        if ( defined $args{$key} ) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 ################
 # package main #
 ################
@@ -247,21 +266,13 @@ use App::SharedLibraryDeps::Cache;
     foreach my $filename ( @{$config->get(q(file))} ) {
         $log->debug(qq(Adding file $filename));
         @dependencies = $cache->get_deps(filename => $filename);
-        say qq(Dependencies for $filename: );
-        # Use map to enumerate over all of the dependency objects, call the
-        # filename() method on each one, and dump the output into a new array
-        # that can be sorted nicely
-        my @dep_filenames = map($_->filename(), @dependencies);
-        foreach my $dep ( sort(@dep_filenames) ) {
-            say qq(- $dep);
-        }
 
         if ( $log->is_info ) {
             use Data::Dumper;
             $Data::Dumper::Indent = 1;
             $Data::Dumper::Sortkeys = 1;
             $Data::Dumper::Terse = 1;
-            foreach my $cache_file ( sort($cache->get_all_cached_files()) ) {
+            foreach my $cache_file ( $cache->get_all_cached_files() ) {
                 $log->info(q(Dumping ) . $cache_file->get_deps_count()
                     . q( deps for: ) . $cache_file->filename);
                 foreach my $dep ($cache_file->get_deps()) {
@@ -272,6 +283,30 @@ use App::SharedLibraryDeps::Cache;
                 foreach my $rev_dep ( $cache_file->get_reverse_deps() ) {
                     $log->info( q( - ) . $rev_dep );
                 }
+            }
+        }
+        if ( $config->get(q(plaintext)) ) {
+            say qq(Dependencies for $filename: );
+        } else {
+            my $date = qx/date/;
+            say qq(# Dependencies for $filename );
+            say qq(# Dependencies generated on: $date);
+        }
+        # Use map to enumerate over all of the dependency objects, call
+        # the filename() method on each one, and dump the output into a
+        # new array that can be sorted nicely
+        #my @dep_filenames = map($_->filename(), @dependencies);
+        foreach my $dep ( $cache->get_all_cached_files() ) {
+            next if ( $dep->filename =~ /linux-[vdso|gate]*/ );
+            if ( $config->get(q(plaintext)) ) {
+                say qq(- ) . $dep->filename;
+            } else {
+                my $mangled_filename = $dep->filename;
+                $mangled_filename =~ s!.*([games|bin|lib])$!/usr/$1!;
+                my $stat = $dep->filestat;
+                say qq(file ) . $dep->filename . q( ) . $mangled_filename
+                    . q( ) . $stat->mode . q( ) . $stat->uid
+                    . q( ) . $stat->gid;
             }
         }
     }

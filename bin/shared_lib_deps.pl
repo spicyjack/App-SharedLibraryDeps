@@ -18,6 +18,10 @@ Version 0.01
 
 our $VERSION = '0.01';
 
+# shortcut to get the name of the file this script lives in
+use File::Basename;
+our $our_name = basename $0;
+
 =head1 SYNOPSIS
 
  perl shared_lib_deps.pl [OPTIONS]
@@ -203,7 +207,7 @@ use warnings;
 
 # Perl core modules
 use Carp;
-use File::Basename;
+
 use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 use Log::Log4perl::Level;
 use Time::HiRes qw(gettimeofday tv_interval);
@@ -217,7 +221,7 @@ $Data::Dumper::Terse = 1;
 use App::SharedLibraryDeps::Cache;
 
     my $script_start_time = [gettimeofday];
-    our $my_name = basename $0;
+
 
     my $config = App::SharedLibraryDeps::Config->new();
     my $cache = App::SharedLibraryDeps::Cache->new();
@@ -251,15 +255,15 @@ use App::SharedLibraryDeps::Cache;
 
     if ( ! defined $config->get(q(file)) ) {
         $log->fatal(q|Use '--file' argument(s) to discover file dependencies|);
-        $log->logdie(qq|'$my_name --help' to see script usage and options|);
+        $log->logdie(qq|'$our_name --help' to see script usage and options|);
     }
 
     # print a nice banner
-    $log->info(qq($my_name: Starting... version $VERSION));
-    $log->info(qq($my_name: My PID is $$));
+    $log->info(qq($our_name: Starting... version $VERSION));
+    $log->info(qq($our_name: My PID is $$));
     # need to call Log::Log4perl::Level::to_level to convert the log level
     # integer constant to "human readable"
-    $log->info(qq($my_name: Current log level is )
+    $log->info(qq($our_name: Current log level is )
         . Log::Log4perl::Level::to_level($log->level()) );
 
     my @dependencies;
@@ -309,9 +313,9 @@ use App::SharedLibraryDeps::Cache;
             }
         }
     }
-    $log->info(qq($my_name: Parsed dependencies for )
+    $log->info(qq($our_name: Parsed dependencies for )
         . scalar(@{$config->get(q(file))}) . q( files));
-    $log->info(qq($my_name: in ) . sprintf(q(%0.1f),
+    $log->info(qq($our_name: in ) . sprintf(q(%0.1f),
         tv_interval($script_start_time, [gettimeofday])) . q( seconds));
 
 =cut

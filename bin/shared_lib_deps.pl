@@ -164,6 +164,32 @@ sub set {
     return undef;
 } # sub get
 
+=item defined($key)
+
+Returns "true" (C<1>) if the value for the key passed in as C<key> is
+C<defined>, and "false" (C<0>) if the value is undefined, or the key doesn't
+exist.
+
+=cut
+
+sub defined {
+    my $self = shift;
+    my $key = shift;
+    # turn the args reference back into a hash with a copy
+    my %args = %{$self->{_args}};
+
+    # Can't use Log4perl here, since it hasn't been set up yet
+    if ( exists $args{$key} ) {
+        #warn qq(exists: $key\n);
+        if ( defined $args{$key} ) {
+            #warn qq(defined: $key; ) . $args{$key} . qq(\n);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
 =item get_args( )
 
 Returns a hash containing the parsed script arguments.
@@ -206,14 +232,14 @@ use App::SharedLibraryDeps::Cache;
     my $cache = App::SharedLibraryDeps::Cache->new();
     # create a logger object
     my $log_conf;
-    if ( defined $config->get(q(debug)) ) {
+    if ( $config->defined(q(debug)) ) {
         $log_conf = qq(log4perl.rootLogger = DEBUG, Screen\n);
-    } elsif ( defined $config->get(q(verbose)) ) {
+    } elsif ( $config->defined(q(verbose)) ) {
         $log_conf = qq(log4perl.rootLogger = INFO, Screen\n);
     } else {
         $log_conf = qq(log4perl.rootLogger = WARN, Screen\n);
     }
-    if ( -t STDOUT || defined $config->get(q(colorize)) ) {
+    if ( -t STDOUT || $config->defined(q(colorize)) ) {
         $log_conf .= qq(log4perl.appender.Screen = )
             . qq(Log::Log4perl::Appender::ScreenColoredLevels\n);
     } else {
@@ -231,7 +257,7 @@ use App::SharedLibraryDeps::Cache;
     Log::Log4perl::init( \$log_conf );
     my $log = get_logger("");
 
-    if ( ! defined $config->get(q(file)) ) {
+    if ( ! $config->defined(q(file)) ) {
         $log->fatal(q|Use '--file' argument(s) to discover file dependencies|);
         $log->logdie(qq|'$my_name --help' to see script usage and options|);
     }

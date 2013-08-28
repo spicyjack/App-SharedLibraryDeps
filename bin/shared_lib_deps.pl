@@ -23,6 +23,7 @@ our $VERSION = '0.01';
  perl shared_lib_deps.pl [OPTIONS]
 
  Script options:
+ -d|--debug         Debug script execution; super noisy output
  -v|--verbose       Verbose script execution
  -h|--help          Shows this help text
  -c|--colorize      Always colorize log output (not filelist output)
@@ -43,7 +44,8 @@ shared_lib_deps.pl>.
 
 our @options = (
     # script options
-    q(verbose|v+),
+    q(debug|d),
+    q(verbose|v),
     q(help|h),
     q(colorize|c),
     # other options
@@ -204,10 +206,9 @@ use App::SharedLibraryDeps::Cache;
     my $cache = App::SharedLibraryDeps::Cache->new();
     # create a logger object
     my $log_conf;
-    if ( defined $config->get(q(verbose)) && $config->get(q(verbose)) > 1 ) {
+    if ( defined $config->get(q(debug)) ) {
         $log_conf = qq(log4perl.rootLogger = DEBUG, Screen\n);
-    } elsif ( defined $config->get(q(verbose))
-            && $config->get(q(verbose)) > 0) {
+    } elsif ( defined $config->get(q(verbose)) ) {
         $log_conf = qq(log4perl.rootLogger = INFO, Screen\n);
     } else {
         $log_conf = qq(log4perl.rootLogger = WARN, Screen\n);

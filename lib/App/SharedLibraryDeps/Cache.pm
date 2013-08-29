@@ -96,6 +96,12 @@ A text-based list of files in the same format that the Linux kernel utility
 C<gen_init_cpio> uses as input to determine which files to add to an
 I<initramfs> image.
 
+=item recursion_allowed
+
+Flag to enable/disable recursion.  Recursion by default is enabled, but
+sometimes a caller will not want recursion in order to resolve/break circular
+library dependencies.
+
 =back
 
 =cut
@@ -107,10 +113,13 @@ sub get_deps {
 
     my ($file, $filename);
     my @recursed_files;
-    my $forced_deps = $args{forced_deps};
-    if ( $args{recurse} ) {
+    my $recursion_allowed = 1;
+    if ( defined $args{recursion_allowed} ) {
+        $recurse = $args{recursion_allowed};
+    }
+    if ( $args{recurse_file} ) {
         # this should already be a File object
-        $file = $args{recurse};
+        $file = $args{recurse_file};
         $log->debug(q(Recursed with ) . $file->filename);
         # copy the contents of the 'recurse_list' of files
         @recursed_files = @{$args{recurse_list}};
@@ -123,8 +132,8 @@ sub get_deps {
                     $log->debug(q(- ) . $recurse->filename);
                 }
                 $self->get_deps(
-                    filename => $file->filename(),
-                    forced_deps => 1
+                    filename          => $file->filename(),
+                    recursion_allowed => 1
                 );
             }
         }
@@ -256,9 +265,9 @@ sub get_deps {
             foreach my $recurse ( @recursed_files ) {
                 $log->debug(q(- ) . $recurse->filename);
             }
-            if ( ! defined $forced_deps ) {
+            if ( ! defined $no_recurse ) {
                 $self->get_deps(
-                    recurse => $dep_obj,
+                    recurse_file => $dep_obj,
                     recurse_list => \@recursed_files,
                 );
                 $log->info(q(Adding ) . $dep_obj->filename()

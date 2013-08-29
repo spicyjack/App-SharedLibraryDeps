@@ -106,16 +106,31 @@ sub get_deps {
     my $log = get_logger("");
 
     my ($file, $filename);
+    my @recursed_files;
+    my $forced_deps = $args{forced_deps};
     if ( $args{recurse} ) {
         # this should already be a File object
         $file = $args{recurse};
-        $log->debug(q(Recursed with ) . $file->hashname());
-    } elsif ( $args{filename} ) {
-        $filename = $args{filename};
-        if ( ! defined $filename ) {
-            $log->warn(q('filename' argument undefined));
-            return ();
+        $log->debug(q(Recursed with ) . $file->filename);
+        # copy the contents of the 'recurse_list' of files
+        @recursed_files = @{$args{recurse_list}};
+        foreach my $check_file ( @recursed_files ) {
+            if ( $file->filename() eq $check_file->filename() ) {
+                $log->warn(q(Recursive depenency detected; trying to break));
+                $log->warn(qq(Calling 'get_deps' with ) . $file->filename());
+                $log->debug(q(recursed files: ));
+                foreach my $recurse ( @recursed_files ) {
+                    $log->debug(q(- ) . $recurse->filename);
+                }
+                $self->get_deps(
+                    filename => $file->filename(),
+                    forced_deps => 1
+                );
+            }
         }
+        push(@recursed_files, $file);
+    } elsif ( defined $args{filename} ) {
+        $filename = $args{filename};
         if ( -r $filename ) {
             $log->debug(qq(File '$filename' is readable));
             # @file_dependencies can be checked to see if the file has already
@@ -237,9 +252,18 @@ sub get_deps {
                 );
             }
             $log->info(qq(Recursing with ') . $dep_obj->shortname() . q('));
-            $self->get_deps( recurse => $dep_obj );
-            $log->info(q(Adding ) . $dep_obj->filename()
-                . q( to cache and dependencies));
+            $log->debug(q(recursed files: ));
+            foreach my $recurse ( @recursed_files ) {
+                $log->debug(q(- ) . $recurse->filename);
+            }
+            if ( ! defined $forced_deps ) {
+                $self->get_deps(
+                    recurse => $dep_obj,
+                    recurse_list => \@recursed_files,
+                );
+                $log->info(q(Adding ) . $dep_obj->filename()
+                    . q( to cache and dependencies));
+            }
             $self->_add_to_cache(file => $dep_obj);
             #push(@dependencies, $dep_obj);
         }

@@ -115,7 +115,7 @@ sub get_deps {
     my @recursed_files;
     my $recursion_allowed = 1;
     if ( defined $args{recursion_allowed} ) {
-        $recurse = $args{recursion_allowed};
+        $recursion_allowed = $args{recursion_allowed};
     }
     if ( $args{recurse_file} ) {
         # this should already be a File object
@@ -126,14 +126,15 @@ sub get_deps {
         foreach my $check_file ( @recursed_files ) {
             if ( $file->filename() eq $check_file->filename() ) {
                 $log->warn(q(Recursive depenency detected; trying to break));
-                $log->warn(qq(Calling 'get_deps' with ) . $file->filename());
+                $log->warn(qq(Calling 'get_deps: recursion_allowed => 0'));
+                $log->warn(qq(With file: ) . $file->filename());
                 $log->debug(q(recursed files: ));
                 foreach my $recurse ( @recursed_files ) {
                     $log->debug(q(- ) . $recurse->filename);
                 }
                 $self->get_deps(
                     filename          => $file->filename(),
-                    recursion_allowed => 1
+                    recursion_allowed => 0
                 );
             }
         }
@@ -265,7 +266,7 @@ sub get_deps {
             foreach my $recurse ( @recursed_files ) {
                 $log->debug(q(- ) . $recurse->filename);
             }
-            if ( ! defined $no_recurse ) {
+            if ( $recursion_allowed ) {
                 $self->get_deps(
                     recurse_file => $dep_obj,
                     recurse_list => \@recursed_files,

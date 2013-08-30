@@ -50,10 +50,10 @@ sub add_dep {
     my $log = get_logger("");
 
     my %deps;
-    $log->debug(q(Adding dependency ) . $dep->hashname()
-        . q( to ) . $self->hashname());
+    $log->debug(q(Adding dependency ) . $dep->hashname . q( to )
+        . $self->hashname);
     if ( defined $self->_deps ) {
-        $log->debug(q(Regurgitated deps for ') . $self->shortname()
+        $log->debug(q(Regurgitated deps for ') . $self->shortname
             . q(' are:));
         %deps = %{$self->_deps};
         $log->debug(Dumper {%deps});
@@ -115,16 +115,16 @@ sub add_reverse_dep {
     my $log = get_logger("");
 
     my %rev_deps;
-    $log->debug(q(Adding reverse dependency ) . $dep->hashname()
-        . q( to ) . $self->hashname());
+    $log->debug(q(Adding reverse dependency ) . $dep->hashname
+        . q( to ) . $self->hashname);
     if ( defined $self->_reverse_deps ) {
-        $log->debug(q(regurgitated reverse deps for ') . $self->shortname()
+        $log->debug(q(regurgitated reverse deps for ') . $self->shortname
             . q(' are:));
         %rev_deps = %{$self->_reverse_deps};
         $log->debug(Dumper {%rev_deps});
     }
     $rev_deps{$dep->filename}++;
-    $log->debug(q(reverse deps for ') . $self->shortname() . q(' are now:));
+    $log->debug(q(reverse deps for ') . $self->shortname . q(' are now:));
     $log->debug(Dumper {%rev_deps});
     $self->_reverse_deps(\%rev_deps);
     my %return = %rev_deps;

@@ -124,16 +124,16 @@ sub get_deps {
         # copy the contents of the 'recurse_list' of files
         @recursed_files = @{$args{recurse_list}};
         foreach my $check_file ( @recursed_files ) {
-            if ( $file->filename() eq $check_file->filename() ) {
+            if ( $file->filename eq $check_file->filename ) {
                 $log->warn(q(Recursive depenency detected; trying to break));
                 $log->warn(qq(Calling 'get_deps: recursion_allowed => 0'));
-                $log->warn(qq(With file: ) . $file->filename());
+                $log->warn(qq(With file: ) . $file->filename);
                 $log->debug(q(recursed files: ));
                 foreach my $recurse ( @recursed_files ) {
                     $log->debug(q(- ) . $recurse->filename);
                 }
                 $self->get_deps(
-                    filename          => $file->filename(),
+                    filename          => $file->filename,
                     recursion_allowed => 0
                 );
             }
@@ -149,7 +149,7 @@ sub get_deps {
                 filename    => $filename,
             );
             #push(@dependencies,
-            #$self->get_deps(filename => $file->filename() ));
+            #$self->get_deps(filename => $file->filename ));
         } elsif ( $filename =~ /linux-[gate|vdso].*/ ) {
             $log->debug(qq($filename is a virtual file));
             $file = App::SharedLibraryDeps::LibFile->new(
@@ -174,7 +174,7 @@ sub get_deps {
     chomp(@ldd_output);
     if ( $log->is_debug() ) {
         $log->debug(qq(Dependencies found by 'ldd' for )
-            . $file->filename() . q( are:));
+            . $file->filename . q( are:));
         foreach my $line ( @ldd_output ) {
             $line =~ s/^\s+//g;
             $log->debug(qq( - $line));
@@ -209,8 +209,8 @@ sub get_deps {
                     . qq( to deps list as '$libfile'));
             }
         } elsif ( $ldd_line =~ /^statically linked/ ) {
-            $libname = $file->filename();
-            $libfile = $file->filename();
+            $libname = $file->filename;
+            $libfile = $file->filename;
             my $static_file = App::SharedLibraryDeps::LibFile->new(
                 libname         => $libname,
                 filename        => $libfile,
@@ -271,7 +271,7 @@ sub get_deps {
                     recurse_file => $dep_obj,
                     recurse_list => \@recursed_files,
                 );
-                $log->info(q(Adding ) . $dep_obj->filename()
+                $log->info(q(Adding ) . $dep_obj->filename
                     . q( to cache and dependencies));
             }
             $self->_add_to_cache(file => $dep_obj);
@@ -280,18 +280,18 @@ sub get_deps {
         # add the new file to this file's forward deps, and add this file to
         # the cache file's reverse dependency
 
-        if ( $file->filename() ne $dep_obj->filename() ) {
-            $log->info(qq(Adding ) . $dep_obj->filename()
-                . qq( to dependencies for ) . $file->filename());
+        if ( $file->filename() ne $dep_obj->filename ) {
+            $log->info(qq(Adding ) . $dep_obj->filename
+                . qq( to dependencies for ) . $file->filename);
             push(@dependencies, $dep_obj);
             $file->add_dep($dep_obj);
             $dep_obj->add_reverse_dep($file);
         } else {
             $log->debug(qq(Can't add dependencies to self; shortname: )
-                . $file->shortname());
+                . $file->shortname);
         }
     }
-    $log->info(qq(Returning; ) . $file->filename() . q( has )
+    $log->info(qq(Returning; ) . $file->filename . q( has )
         . scalar(@dependencies) . q( dependencies));
 
     return @dependencies;
@@ -316,8 +316,8 @@ sub _normalize_filename {
     #warn Dumper {%args};
     if ( ref($args{file}) ) {
         my $file_obj = $args{file};
-        $log->debug(q(Object: ) . $file_obj->filename());
-        return $file_obj->filename();
+        $log->debug(q(Object: ) . $file_obj->filename);
+        return $file_obj->filename;
     } else {
         $log->debug(q(File: ) . $args{file});
         return $args{file};
@@ -343,14 +343,14 @@ sub _add_to_cache {
     die q(File to add to Cache is not a File object)
         unless (ref($file));
 
-    $log->debug(q(Checking if ') . $file->libname()
+    $log->debug(q(Checking if ') . $file->libname
         . q(' already exists in cache));
-    if ( exists $_cache{$file->filename()} ) {
-        $log->info($file->libname() . q( already exists in cache!));
+    if ( exists $_cache{$file->filename} ) {
+        $log->info($file->libname . q( already exists in cache!));
         $return_value = undef;
     } else {
-        $log->info(q(Added ) . $file->libname() . q( to cache));
-        $_cache{$file->filename()} = $file;
+        $log->info(q(Added ) . $file->libname . q( to cache));
+        $_cache{$file->filename} = $file;
         $return_value = 1;
     }
 }

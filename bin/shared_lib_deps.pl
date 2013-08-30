@@ -280,7 +280,7 @@ use App::SharedLibraryDeps::Cache;
         # Use map to enumerate over all of the dependency objects, call the
         # filename() method on each one, and dump the output into a new array
         # that can be sorted nicely
-        my @dep_filenames = map($_->filename(), @dependencies);
+        my @dep_filenames = map($_->filename, @dependencies);
         foreach my $dep ( sort(@dep_filenames) ) {
             say qq(- $dep);
         }
